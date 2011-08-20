@@ -219,6 +219,8 @@ def parse_host(arr, filename, lineno):
 	alias = arr[1]
 	
 	host_list = string.join(arr[2:])
+	host_list = string.replace(host_list, ' ', '')
+	host_list = string.replace(host_list, ',,', ',')
 	host_list = string.split(host_list, ',')
 	
 	if alias in host_list:
@@ -240,46 +242,46 @@ def parse_host(arr, filename, lineno):
 			if string.find(host, ':') > -1:
 				# treat as IPv6 address
 				pass
-
+			
 			elif string.find(host, '/') > -1:
 				# treat as network range
 				a = string.split(host, '/')
 				if len(a) != 2:
 					stderr("%s:%d: invalid host address '%s'" % (filename, lineno, host))
 					return 1
-
+				
 				if not _is_ipv4_address(a[0]):
 					stderr("%s:%d: invalid host address '%s'" % (filename, lineno, host))
 					return 1
-
+				
 				if a[1] != '32':
 					stderr("%s:%d: invalid host address '%s'" % (filename, lineno, host))
 					return 1
-
+				
 				pass
-
+			
 			elif _is_ipv4_address(host):
 				# treat as IPv4 address
 				pass
-
+			
 			else:
 				# treat as fqdn, so resolve the address
 				addrs = firewater_resolv.resolv(host)
 				if addrs == None:	# error
 					stderr("%s:%d: failed to resolve '%s'" % (filename, lineno, host))
 					return 1
-
+				
 				for addr in addrs:
 					if not addr in new_host_list:
 						new_host_list.append(addr)
-
+				
 				continue
-
+			
 			if not host in new_host_list:
 				new_host_list.append(host)
 	
 	HOSTS[alias] = new_host_list
-
+	
 	return 0
 
 
@@ -291,6 +293,8 @@ def parse_range(arr, filename, lineno):
 	alias = arr[1]
 	
 	ranges_list = string.join(arr[2:])
+	ranges_list = string.replace(ranges_list, ' ', '')
+	ranges_list = string.replace(ranges_list, ',,', ',')
 	ranges_list = string.split(ranges_list, ',')
 	
 	if alias in ranges_list:
@@ -344,6 +348,81 @@ def parse_range(arr, filename, lineno):
 				new_ranges_list.append(host)
 	
 	HOSTS[alias] = new_ranges_list
+
+	return 0
+
+
+def parse_group(arr, filename, lineno):
+	if len(arr) < 3:
+		stderr("%s:%d: 'group' requires at least 2 arguments: the group alias and at least 1 member" % (filename, lineno))
+		return 1
+	
+	alias = arr[1]
+	
+	group_list = string.join(arr[2:], ',')
+	group_list = string.replace(group_list, ' ', '')
+	group_list = string.replace(group_list, ',,', ',')
+	group_list = string.split(group_list, ',')
+	
+	if alias in group_list:
+		stderr("%s:%d: range %s references back to itself" % (filename, lineno, alias))
+		return 1
+	
+	# note that group are stored in the same way as groups
+	if HOSTS.has_key(alias):
+		stderr("%s:%d: redefinition of range or group %s" % (filename, lineno, alias))
+		return 1
+	
+	# expand the list by filling in any previously defined aliases
+	new_group_list = []
+	while len(group_list) > 0:
+		group = group_list.pop(0)
+		if HOSTS.has_key(group):
+			group_list.extend(HOSTS[group])
+		else:
+			# treat as IP address or fqdn
+			if string.find(group, ':') > -1:
+				# treat as IPv6 address
+				pass
+			
+			elif string.find(group, '/') > -1:
+				# treat as network range
+				a = string.split(group, '/')
+				if len(a) != 2:
+					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, group))
+					return 1
+				
+				if not _is_ipv4_address(a[0]):
+					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, group))
+					return 1
+				
+				try:
+					bits = int(a[1])
+				except ValueError:
+					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, group))
+					return 1
+				
+				if bits < 0 or bits > 32:
+					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, group))
+					return 1
+			
+			else:
+				# treat as fqdn, so resolve the address
+				addrs = firewater_resolv.resolv(group)
+				if addrs == None:	# error
+					stderr("%s:%d: failed to resolve '%s'" % (filename, lineno, group))
+					return 1
+				
+				for addr in addrs:
+					if not addr in new_group_list:
+						new_group_list.append(addr)
+				
+				continue
+			
+			if not group in new_group_list:
+				new_group_list.append(group)
+	
+	HOSTS[alias] = new_group_list
 
 	return 0
 
