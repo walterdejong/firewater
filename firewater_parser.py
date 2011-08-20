@@ -283,4 +283,69 @@ def parse_host(arr, filename, lineno):
 	return 0
 
 
+def parse_range(arr, filename, lineno):
+	if len(arr) < 3:
+		stderr("%s:%d: 'range' requires at least 2 arguments: the range alias and the address range" % (filename, lineno))
+		return 1
+	
+	alias = arr[1]
+	
+	ranges_list = string.join(arr[2:])
+	ranges_list = string.split(ranges_list, ',')
+	
+	if alias in ranges_list:
+		stderr("%s:%d: range %s references back to itself" % (filename, lineno, alias))
+		return 1
+	
+	# note that ranges are stored in the same way as hosts
+	if HOSTS.has_key(alias):
+		stderr("%s:%d: redefinition of range or host %s" % (filename, lineno, alias))
+		return 1
+	
+	# expand the list by filling in any previously defined aliases
+	new_ranges_list = []
+	while len(ranges_list) > 0:
+		# 'range' is a Python keyword ... so I use 'host' instead (confusing huh?)
+		host = ranges_list.pop(0)
+		if HOSTS.has_key(host):
+			ranges_list.extend(HOSTS[host])
+		else:
+			# treat as IP address or fqdn
+			if string.find(host, ':') > -1:
+				# treat as IPv6 address
+				pass
+			
+			elif string.find(host, '/') > -1:
+				# treat as network range
+				a = string.split(host, '/')
+				if len(a) != 2:
+					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, host))
+					return 1
+				
+				if not _is_ipv4_address(a[0]):
+					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, host))
+					return 1
+				
+				try:
+					bits = int(a[1])
+				except ValueError:
+					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, host))
+					return 1
+				
+				if bits < 0 or bits > 32:
+					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, host))
+					return 1
+			
+			else:
+				stderr("%s:%d: invalid address range '%s'" % (filename, lineno, host))
+				return 1
+			
+			if not host in new_ranges_list:
+				new_ranges_list.append(host)
+	
+	HOSTS[alias] = new_ranges_list
+
+	return 0
+
+
 # EOB
