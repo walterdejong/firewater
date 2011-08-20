@@ -15,7 +15,8 @@
 #	and it will just work (magic trick with getattr(module, functionname))
 #
 
-from firewater_globals import *
+import  firewater_globals
+
 from firewater_lib import *
 
 import firewater_resolv
@@ -169,7 +170,7 @@ def parse_interface(arr, filename, lineno):
 		stderr("%s:%d: interface %s references back to itself" % (filename, lineno, alias))
 		return 1
 	
-	if INTERFACES.has_key(alias):
+	if firewater_globals.INTERFACES.has_key(alias):
 		stderr("%s:%d: redefinition of interface %s" % (filename, lineno, alias))
 		return 1
 	
@@ -177,8 +178,8 @@ def parse_interface(arr, filename, lineno):
 	new_iface_list = []
 	while len(iface_list) > 0:
 		iface = iface_list.pop(0)
-		if INTERFACES.has_key(iface):
-			iface_list.extend(INTERFACES[iface])
+		if firewater_globals.INTERFACES.has_key(iface):
+			iface_list.extend(firewater_globals.INTERFACES[iface])
 		else:
 			# treat as real system interface name
 			if not iface in new_iface_list:
@@ -186,9 +187,9 @@ def parse_interface(arr, filename, lineno):
 	
 	debug('new interface: %s:%s' % (alias, new_iface_list))
 	
-	INTERFACES[alias] = new_iface_list
+	firewater_globals.INTERFACES[alias] = new_iface_list
 	
-	all_ifaces = INTERFACES['all']
+	all_ifaces = firewater_globals.INTERFACES['all']
 	for iface in new_iface_list:
 		if not iface in all_ifaces:
 			all_ifaces.append(iface)
@@ -201,18 +202,18 @@ def parse_debug(arr, filename, lineno):
 		stderr("%s:%d: usage: debug interfaces|hosts|services" % (filename, lineno))
 		return 1
 	
-	if arr[1] == 'interfaces':
-		print 'INTERFACES ==', INTERFACES
+	if arr[1] in ('iface', 'interfaces'):
+		print 'firewater_globals.INTERFACES ==', firewater_globals.INTERFACES
 		print
 		return 0
 	
-	elif arr[1] == 'host' or arr[1] == 'hosts':
-		print 'HOSTS ==', HOSTS
+	elif arr[1] in ('host', 'hosts'):
+		print 'firewater_globals.HOSTS ==', firewater_globals.HOSTS
 		print
 		return 0
 	
-	elif arr[1] == 'services' or arr[1] == 'serv':
-		print 'SERVICES ==', SERVICES
+	elif arr[1] in ('services', 'serv'):
+		print 'firewater_globals.SERVICES ==', firewater_globals.SERVICES
 		print
 		return 0
 	
@@ -236,7 +237,7 @@ def parse_host(arr, filename, lineno):
 		stderr("%s:%d: host %s references back to itself" % (filename, lineno, alias))
 		return 1
 	
-	if HOSTS.has_key(alias):
+	if firewater_globals.HOSTS.has_key(alias):
 		stderr("%s:%d: redefinition of host %s" % (filename, lineno, alias))
 		return 1
 	
@@ -244,8 +245,8 @@ def parse_host(arr, filename, lineno):
 	new_host_list = []
 	while len(host_list) > 0:
 		host = host_list.pop(0)
-		if HOSTS.has_key(host):
-			host_list.extend(HOSTS[host])
+		if firewater_globals.HOSTS.has_key(host):
+			host_list.extend(firewater_globals.HOSTS[host])
 		else:
 			# treat as IP address or fqdn
 			if string.find(host, ':') > -1:
@@ -291,7 +292,7 @@ def parse_host(arr, filename, lineno):
 	
 	debug('new host: %s:%s' % (alias, new_host_list))
 	
-	HOSTS[alias] = new_host_list
+	firewater_globals.HOSTS[alias] = new_host_list
 	
 	return 0
 
@@ -313,7 +314,7 @@ def parse_range(arr, filename, lineno):
 		return 1
 	
 	# note that ranges are stored in the same way as hosts
-	if HOSTS.has_key(alias):
+	if firewater_globals.HOSTS.has_key(alias):
 		stderr("%s:%d: redefinition of range or host %s" % (filename, lineno, alias))
 		return 1
 	
@@ -322,8 +323,8 @@ def parse_range(arr, filename, lineno):
 	while len(ranges_list) > 0:
 		# 'range' is a Python keyword ... so I use 'host' instead (confusing huh?)
 		host = ranges_list.pop(0)
-		if HOSTS.has_key(host):
-			ranges_list.extend(HOSTS[host])
+		if firewater_globals.HOSTS.has_key(host):
+			ranges_list.extend(firewater_globals.HOSTS[host])
 		else:
 			# treat as IP address or fqdn
 			if string.find(host, ':') > -1:
@@ -360,7 +361,7 @@ def parse_range(arr, filename, lineno):
 	
 	debug('new range: %s:%s' % (alias, new_ranges_list))
 	
-	HOSTS[alias] = new_ranges_list
+	firewater_globals.HOSTS[alias] = new_ranges_list
 
 	return 0
 
@@ -382,7 +383,7 @@ def parse_group(arr, filename, lineno):
 		return 1
 	
 	# note that group are stored in the same way as groups
-	if HOSTS.has_key(alias):
+	if firewater_globals.HOSTS.has_key(alias):
 		stderr("%s:%d: redefinition of range or group %s" % (filename, lineno, alias))
 		return 1
 	
@@ -390,8 +391,8 @@ def parse_group(arr, filename, lineno):
 	new_group_list = []
 	while len(group_list) > 0:
 		group = group_list.pop(0)
-		if HOSTS.has_key(group):
-			group_list.extend(HOSTS[group])
+		if firewater_globals.HOSTS.has_key(group):
+			group_list.extend(firewater_globals.HOSTS[group])
 		else:
 			# treat as IP address or fqdn
 			if string.find(group, ':') > -1:
@@ -437,7 +438,7 @@ def parse_group(arr, filename, lineno):
 	
 	debug('new group: %s:%s' % (alias, new_group_list))
 	
-	HOSTS[alias] = new_group_list
+	firewater_globals.HOSTS[alias] = new_group_list
 	
 	return 0
 
@@ -453,7 +454,7 @@ def parse_service(arr, filename, lineno):
 	
 	alias = arr[1]
 	
-	if SERVICES.has_key(alias):
+	if firewater_globals.SERVICES.has_key(alias):
 		stderr("%s:%d: redefinition of service %s" % (filename, lineno, alias))
 		return 1
 	
@@ -539,8 +540,8 @@ def parse_service(arr, filename, lineno):
 			stderr("%s:%d: service %s references back to itself" % (filename, lineno))
 			return -1
 		
-		if SERVICES.has_key(arr[2]):
-			obj2 = SERVICES[arr[2]]
+		if firewater_globals.SERVICES.has_key(arr[2]):
+			obj2 = firewater_globals.SERVICES[arr[2]]
 		
 			# copy the other service object
 			if not obj.proto:
@@ -562,8 +563,8 @@ def parse_service(arr, filename, lineno):
 			if len(arr) == 5:
 				# interface-specific service
 				iface = arr[4]
-				if INTERFACES.has_key(iface):
-					obj.iface = INTERFACES[iface]
+				if firewater_globals.INTERFACES.has_key(iface):
+					obj.iface = firewater_globals.INTERFACES[iface]
 				else:
 					# treat as real system interface
 					obj.iface = []
@@ -575,7 +576,7 @@ def parse_service(arr, filename, lineno):
 	
 	debug('new service: %s:%s' % (alias, obj))
 	
-	SERVICES[alias] = obj
+	firewater_globals.SERVICES[alias] = obj
 	
 	return 0
 
