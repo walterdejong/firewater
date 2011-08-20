@@ -1,0 +1,20 @@
+firewater by Walter de Jong <walter@heiho.net> (c) 2011
+
+firewater COMES WITH NO WARRANTY. firewater IS FREE SOFTWARE.
+firewater is distributed under terms described in the GNU General Public
+License.
+
+firewater is a(nother) hostbased firewall configuration tool.
+It offers a simple way to compose firewall policies from the command prompt,
+without the need for a GUI.
+
+firewater lowers the steep learning curve that native firewalling commands
+have. firewater features user-definable logical groups to keep your policies
+(or rules) readable and easy to understand.
+For maximum flexibility, typical firewater statements may be intermixed
+with native commands to the underlying system-specific firewall.
+
+firewater currently only works with Linux iptables, but is extensible
+through its modular architecture so that it may support more firewalling
+systems in the future.
+
