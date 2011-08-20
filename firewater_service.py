@@ -9,6 +9,7 @@
 #   License.
 #
 
+import socket
 
 class ServiceObject:
 	'''object respresenting a service'''
@@ -22,6 +23,19 @@ class ServiceObject:
 	
 	def __str__(self):
 		return '<ServiceObject: %s,%s,%d,%d,%s>' % (self.name, self.proto, self.port, self.endport, self.iface)
+
+
+def servbyname(name):
+	'''return service port number'''
+	'''or None on error'''
+	
+	try:
+		port = socket.servbyname(name)
+	except socket.error:
+		return None
+	
+	return port
+
 
 # EOB
 
