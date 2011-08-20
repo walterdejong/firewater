@@ -19,6 +19,7 @@ from firewater_globals import *
 from firewater_lib import *
 
 import firewater_resolv
+import firewater_service
 
 import os
 import sys
@@ -145,6 +146,7 @@ def _is_ipv4_address(addr):
 
 # keyword: include
 def parse_include(arr, filename, lineno):
+	debug('include %s' % filename)
 	# recursively read the given parse file
 	return read_input_file(arr[1])
 
@@ -182,6 +184,8 @@ def parse_interface(arr, filename, lineno):
 			if not iface in new_iface_list:
 				new_iface_list.append(iface)
 	
+	debug('new interface: %s:%s' % (alias, new_iface_list))
+	
 	INTERFACES[alias] = new_iface_list
 	
 	all_ifaces = INTERFACES['all']
@@ -194,7 +198,7 @@ def parse_interface(arr, filename, lineno):
 
 def parse_debug(arr, filename, lineno):
 	if len(arr) < 2:
-		stderr("%s:%d: usage: debug interfaces|hosts" % (filename, lineno))
+		stderr("%s:%d: usage: debug interfaces|hosts|services" % (filename, lineno))
 		return 1
 	
 	if arr[1] == 'interfaces':
@@ -204,6 +208,11 @@ def parse_debug(arr, filename, lineno):
 	
 	elif arr[1] == 'host' or arr[1] == 'hosts':
 		print 'HOSTS ==', HOSTS
+		print
+		return 0
+	
+	elif arr[1] == 'services' or arr[1] == 'serv':
+		print 'SERVICES ==', SERVICES
 		print
 		return 0
 	
@@ -280,6 +289,8 @@ def parse_host(arr, filename, lineno):
 			if not host in new_host_list:
 				new_host_list.append(host)
 	
+	debug('new host: %s:%s' % (alias, new_host_list))
+	
 	HOSTS[alias] = new_host_list
 	
 	return 0
@@ -346,6 +357,8 @@ def parse_range(arr, filename, lineno):
 			
 			if not host in new_ranges_list:
 				new_ranges_list.append(host)
+	
+	debug('new range: %s:%s' % (alias, new_ranges_list))
 	
 	HOSTS[alias] = new_ranges_list
 
@@ -422,8 +435,148 @@ def parse_group(arr, filename, lineno):
 			if not group in new_group_list:
 				new_group_list.append(group)
 	
+	debug('new group: %s:%s' % (alias, new_group_list))
+	
 	HOSTS[alias] = new_group_list
+	
+	return 0
 
+
+def parse_serv(arr, filename, lineno):
+	return parse_service(arr, filename, lineno)
+
+
+def parse_service(arr, filename, lineno):
+	if len(arr) < 3:
+		stderr("%s:%d: '%s' requires at least 2 arguments: the service alias and at least 1 property" % (filename, lineno, arr[0]))
+		return 1
+	
+	alias = arr[1]
+	
+	if SERVICES.has_key(alias):
+		stderr("%s:%d: redefinition of service %s" % (filename, lineno, alias))
+		return 1
+	
+	obj = firewater_service.ServiceObject(alias)
+	
+	if arr[2] in ('tcp', 'udp', 'icmp', 'gre'):
+		obj.proto = arr.pop(2)
+	
+	if len(arr) < 3:
+		stderr("%s:%d: missing service or port number" % (filename, lineno))
+		return 1
+	
+	if string.find(string.digits, arr[2][0]) > -1:
+		# treat as port number or range
+		if string.find(arr[2], '-') > -1:
+			# treat as port range
+			port_range = arr[2]
+			
+			port_arr = string.split(port_range, '-')
+			if len(port_arr) != 2:
+				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+				return 1
+			
+			try:
+				obj.port = int(port_arr[0])
+			except ValueError:
+				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+				return 1
+			
+			try:
+				obj.endport = int(port_arr[1])
+			except ValueError:
+				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+				return 1
+			
+			if obj.port < -1 or obj.port > 65535:
+				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+				return 1
+			
+			if obj.endport < -1 or obj.endport > 65535 or obj.endport < obj.port:
+				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+				return 1
+		
+		elif string.find(arr[2], ':') > -1:
+			# treat as port range (same code as above, split by ':') (yeah stupid, I know)
+			port_range = arr[2]
+			
+			port_arr = string.split(port_range, ':')
+			if len(port_arr) != 2:
+				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+				return 1
+			
+			try:
+				obj.port = int(port_arr[0])
+			except ValueError:
+				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+				return 1
+			
+			try:
+				obj.endport = int(port_arr[1])
+			except ValueError:
+				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+				return 1
+			
+			if obj.port < -1 or obj.port > 65535:
+				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+				return 1
+			
+			if obj.endport < -1 or obj.endport > 65535 or obj.endport < obj.port:
+				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+				return 1
+		
+		else:
+			# single port number
+			try:
+				obj.port = int(arr[2])
+			except ValueError:
+				stderr("%s:%d: invalid port number '%s'" % (filename, lineno, arr[2]))
+				return 1
+	
+	else:
+		if arr[2] == alias:
+			stderr("%s:%d: service %s references back to itself" % (filename, lineno))
+			return -1
+		
+		if SERVICES.has_key(arr[2]):
+			obj2 = SERVICES[arr[2]]
+		
+			# copy the other service object
+			if not obj.proto:
+				obj.proto = obj2.proto
+			
+			obj.port = obj2.port
+			obj.endport = obj2.endport
+			obj.iface = obj2.iface
+		
+		else:
+			# treat as system service name
+			obj.port = firewater_service.servbyname(arr[2])
+			if obj.port == None:
+				stderr("%s:%d: no such service '%s'" % (filename, lineno, arr[2]))
+				return 1
+	
+	if len(arr) > 3:
+		if arr[3] in ('iface', 'interface'):
+			if len(arr) == 5:
+				# interface-specific service
+				iface = arr[4]
+				if INTERFACES.has_key(iface):
+					obj.iface = INTERFACES[iface]
+				else:
+					# treat as real system interface
+					obj.iface = []
+					obj.iface.append(arr[4])
+			
+			else:
+				stderr("%s:%d: too many arguments to '%s'" % (filename, lineno, arr[0]))
+				return 1
+	
+	debug('new service: %s:%s' % (alias, obj))
+	
+	SERVICES[alias] = obj
+	
 	return 0
 
 

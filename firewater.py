@@ -61,6 +61,7 @@ def get_options():
 		
 		if opt in ('-D', '--debug'):
 			DEBUG = True
+			debug('debug mode')
 			continue
 
 		if opt == '--version':

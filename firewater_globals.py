@@ -20,6 +20,9 @@ INTERFACES = { 'all' : [] }
 HOSTS = { 'any' : [ '0.0.0.0/0' ],
 	'everybody' : [ '0.0.0.0/0' ] }
 
+# dictionary with user-defined ServiceObjects
+SERVICES = {}
+
 
 # EOB
 

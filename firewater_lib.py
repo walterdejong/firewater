@@ -9,6 +9,8 @@
 #   License.
 #
 
+import firewater_globals
+
 import sys
 
 

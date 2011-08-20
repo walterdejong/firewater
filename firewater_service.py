@@ -21,7 +21,7 @@ class ServiceObject:
 		self.endport = endport		# it can be a port range
 		self.iface = iface			# forced onto an interface
 	
-	def __str__(self):
+	def __repr__(self):
 		return '<ServiceObject: %s,%s,%d,%d,%s>' % (self.name, self.proto, self.port, self.endport, self.iface)
 
 
@@ -30,7 +30,7 @@ def servbyname(name):
 	'''or None on error'''
 	
 	try:
-		port = socket.servbyname(name)
+		port = socket.getservbyname(name)
 	except socket.error:
 		return None
 	
