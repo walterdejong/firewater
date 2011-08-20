@@ -9,7 +9,8 @@
 #   License.
 #
 
-from firewater_globals import *
+import firewater_globals
+
 from firewater_lib import *
 
 import firewater_parser
@@ -60,12 +61,12 @@ def get_options():
 			sys.exit(1)
 		
 		if opt in ('-D', '--debug'):
-			DEBUG = True
+			firewater_globals.DEBUG = True
 			debug('debug mode')
 			continue
 
 		if opt == '--version':
-			print VERSION
+			print firewater_globals.VERSION
 			sys.exit(0)
 	
 	# remaining arguments are filenames for input
