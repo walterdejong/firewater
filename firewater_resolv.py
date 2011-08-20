@@ -29,7 +29,7 @@ def resolv(name):
 	try:
 		addr_arr = socket.getaddrinfo(name, 0, socket.AF_UNSPEC)
 	except socket.gaierror, (err):
-		stderr("error resolving %s" % name)
+#		stderr("error resolving %s" % name)
 		return None
 	
 	addrs = []
@@ -67,7 +67,7 @@ def resolv6(name):
 	try:
 		addr_arr = socket.getaddrinfo(name, 0, socket.AF_INET6)
 	except socket.gaierror, (err):
-		stderr("error resolving %s" % name)
+#		stderr("error resolving %s" % name)
 		return None
 	
 	addrs = []

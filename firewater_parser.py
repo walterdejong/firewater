@@ -243,6 +243,19 @@ def parse_host(arr, filename, lineno):
 
 			elif string.find(host, '/') > -1:
 				# treat as network range
+				a = string.split(host, '/')
+				if len(a) != 2:
+					stderr("%s:%d: invalid host address '%s'" % (filename, lineno, host))
+					return 1
+
+				if not _is_ipv4_address(a[0]):
+					stderr("%s:%d: invalid host address '%s'" % (filename, lineno, host))
+					return 1
+
+				if a[1] != '32':
+					stderr("%s:%d: invalid host address '%s'" % (filename, lineno, host))
+					return 1
+
 				pass
 
 			elif _is_ipv4_address(host):
@@ -253,6 +266,7 @@ def parse_host(arr, filename, lineno):
 				# treat as fqdn, so resolve the address
 				addrs = firewater_resolv.resolv(host)
 				if addrs == None:	# error
+					stderr("%s:%d: failed to resolve '%s'" % (filename, lineno, host))
 					return 1
 
 				for addr in addrs:
