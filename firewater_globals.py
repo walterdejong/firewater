@@ -16,6 +16,9 @@ DEBUG = False
 # dictionary holding interface aliases and groups
 INTERFACES = { 'all' : [] }
 
+# dictionary with host and network range aliases
+HOSTS = { 'any' : [ '0.0.0.0/0' ],
+	'everybody' : [ '0.0.0.0/0' ] }
 
 
 # EOB

@@ -18,6 +18,8 @@
 from firewater_globals import *
 from firewater_lib import *
 
+import firewater_resolv
+
 import os
 import sys
 import string
@@ -118,6 +120,29 @@ def _parse_integer(param, value, filename, lineno, radix = 10):
 	return (0, n)
 
 
+def _is_ipv4_address(addr):
+	'''returns True if addr looks like an IPv4 address'''
+	'''or False if not'''
+
+	arr = string.split(addr, '.')
+	if not arr:
+		return False
+	
+	if len(arr) != 4:
+		return False
+	
+	for i in xrange(0, 4):
+		try:
+			n = int(arr[i])
+		except ValueError:
+			return False
+
+		if n < 0 or n > 255:
+			return False
+	
+	return True
+
+
 # keyword: include
 def parse_include(arr, filename, lineno):
 	# recursively read the given parse file
@@ -169,7 +194,7 @@ def parse_interface(arr, filename, lineno):
 
 def parse_debug(arr, filename, lineno):
 	if len(arr) < 2:
-		stderr("%s:%d: usage: debug interfaces" % (filename, lineno))
+		stderr("%s:%d: usage: debug interfaces|hosts" % (filename, lineno))
 		return 1
 	
 	if arr[1] == 'interfaces':
@@ -177,143 +202,71 @@ def parse_debug(arr, filename, lineno):
 		print
 		return 0
 	
+	elif arr[1] == 'host' or arr[1] == 'hosts':
+		print 'HOSTS ==', HOSTS
+		print
+		return 0
+	
 	stderr("%s:%d: don't know how to debug '%s'" % (filename, lineno, arr[1]))
 	return 1
 
 
-# keyword: group
-def parse_group(arr, filename, lineno):
-	if len(arr) < 3:
-		stderr("%s:%d: 'group' requires at least 2 arguments: the group name and at least 1 member" % (filename, lineno))
-		return 1
-	
-	group = arr[1]
-	
-	if firewater_param.GROUP_DEFS.has_key(group):
-		stderr('%s:%d: redefiniton of group %s' % (filename, lineno, group))
-		return 1
-	
-	if firewater_param.NODES.has_key(group):
-		stderr('%s:%d: %s was previously defined as a node' % (filename, lineno, group))
-		return 1
-	
-	try:
-		firewater_param.GROUP_DEFS[group] = expand_grouplist(arr[2:])
-	except RuntimeError, e:
-		stderr('%s:%d: compound groups can not contain node names' % (filename, lineno))
-		return 1
-	
-	return 0
-
-
-# keyword: host
 def parse_host(arr, filename, lineno):
-	if len(arr) < 2:
-		stderr("%s:%d: '%s' requires at least 1 argument: the nodename" % (filename, lineno, arr[0]))
+	if len(arr) < 3:
+		stderr("%s:%d: 'host' requires at least 2 arguments: the host alias and the IP address or fqdn" % (filename, lineno))
 		return 1
 	
-	node = arr[1]
-	groups = arr[2:]
+	alias = arr[1]
 	
-	if firewater_param.NODES.has_key(node):
-		stderr('%s:%d: redefinition of node %s' % (filename, lineno, node))
+	host_list = string.join(arr[2:])
+	host_list = string.split(host_list, ',')
+	
+	if alias in host_list:
+		stderr("%s:%d: host %s references back to itself" % (filename, lineno, alias))
 		return 1
 	
-	if firewater_param.GROUP_DEFS.has_key(node):
-		stderr('%s:%d: %s was previously defined as a group' % (filename, lineno, node))
+	if HOSTS.has_key(alias):
+		stderr("%s:%d: redefinition of host %s" % (filename, lineno, alias))
 		return 1
 	
-	#
-	# node lines may end with special optional qualifiers like
-	# 'interface:', 'ipaddress:', 'hostname:'
-	#
-	# as a consequence, group names can no longer have a colon ':' in them
-	#
-	while len(groups) >= 1:
-		n = string.find(groups[-1], ':')
-		if n < 0:
-			break
-		
-		if n == 0:
-			stderr("%s:%d: syntax error in node qualifier '%s'" % (filename, lineno, groups[-1]))
-			return 1
-		
-		if n > 0:
-			option = groups.pop()
-			qualifier = option[:n]
-			arg = option[n+1:]
-			
-			if qualifier == 'interface' or qualifier == 'ipaddress':
-				if firewater_param.INTERFACES.has_key(node):
-					stderr('%s:%d: redefinition of IP address for node %s' % (filename, lineno, node))
-					return 1
-				
-				if not arg:
-					stderr("%s:%d: missing argument to node qualifier '%s'" % (filename, lineno, qualifier))
-					return 1
-				
-				firewater_param.INTERFACES[node] = arg
-			
-			elif qualifier == 'hostname':
-				if firewater_param.HOSTNAMES.has_key(arg):
-					stderr('%s:%d: hostname %s already in use for node %s' % (filename, lineno, arg, firewater_param.HOSTNAMES[arg]))
-					return 1
-				
-				if not arg:
-					stderr("%s:%d: missing argument to node qualifier 'hostname'" % (filename, lineno))
-					return 1
-				
-				firewater_param.HOSTNAMES[arg] = node
-				firewater_param.HOSTNAMES_BY_NODE[node] = arg
-			
-			else:
-				stderr('%s:%d: unknown node qualifier %s' % (filename, lineno, qualifier))
-				return 1
-	
-	try:
-		firewater_param.NODES[node] = expand_grouplist(groups)
-	except RuntimeError, e:
-		stderr('%s:%d: a group list can not contain node names' % (filename, lineno))
-		return 1
-	
-	return 0
-
-
-def expand_grouplist(grouplist):
-	'''expand a list of (compound) groups recursively
-	Returns the expanded group list'''
-	
-	groups = []
-	
-	for elem in grouplist:
-		groups.append(elem)
-		
-		if firewater_param.GROUP_DEFS.has_key(elem):
-			compound_groups = firewater_param.GROUP_DEFS[elem]
-			
-			# mind that GROUP_DEFS[group] can be None
-			# for any groups that have no subgroups
-			if compound_groups != None:
-				groups.extend(compound_groups)
+	# expand the list by filling in any previously defined aliases
+	new_host_list = []
+	while len(host_list) > 0:
+		host = host_list.pop(0)
+		if HOSTS.has_key(host):
+			host_list.extend(HOSTS[host])
 		else:
-			# node names are often treated in the code as groups too ...
-			# but they are special groups, and can not be in a compound group just
-			# to prevent odd things from happening
-			if firewater_param.NODES.has_key(elem):
-				raise RuntimeError, 'node %s can not be part of compound group list' % elem
-			
-			firewater_param.GROUP_DEFS[elem] = None
+			# treat as IP address or fqdn
+			if string.find(host, ':') > -1:
+				# treat as IPv6 address
+				pass
+
+			elif string.find(host, '/') > -1:
+				# treat as network range
+				pass
+
+			elif _is_ipv4_address(host):
+				# treat as IPv4 address
+				pass
+
+			else:
+				# treat as fqdn, so resolve the address
+				addrs = firewater_resolv.resolv(host)
+				if addrs == None:	# error
+					return 1
+
+				for addr in addrs:
+					if not addr in new_host_list:
+						new_host_list.append(addr)
+
+				continue
+
+			if not host in new_host_list:
+				new_host_list.append(host)
 	
-	# remove duplicates
-	# this looks pretty lame ... but Python sets are not usable here;
-	# sets mess around with the order and Python sets changed in Python 2.6
-	
-	expanded_grouplist = []
-	for elem in groups:
-		if not elem in expanded_grouplist:
-			expanded_grouplist.append(elem)
-	
-	return expanded_grouplist
+	HOSTS[alias] = new_host_list
+
+	return 0
 
 
 # EOB
