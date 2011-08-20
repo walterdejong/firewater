@@ -74,7 +74,7 @@ def read_input_file(filename):
 		line = ''	# <-- line is being reset here; use arr[] from here on
 		
 		if len(arr) <= 1:
-			stderr('%s:%d: syntax error ; expected key/value pair' % (filename, lineno))
+			stderr('%s:%d: syntax error' % (filename, lineno))
 			errors = errors + 1
 			continue
 		
