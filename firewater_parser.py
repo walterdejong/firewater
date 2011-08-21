@@ -581,4 +581,50 @@ def parse_service(arr, filename, lineno):
 	return 0
 
 
+def parse_chain(arr, filename, lineno):
+	if len(arr) < 2:
+		stderr("%s:%d: syntax error" % (filename, lineno))
+		return 1
+	
+	chain = arr[1]
+	
+	if not chain in ('incoming', 'outgoing', 'forwarding'):
+		stderr("%s:%d: syntax error: unknown chain '%s'" % (filename, lineno, chain))
+		return 1
+	
+	if len(arr) == 5:
+		if arr[2] != 'default' or arr[3] != 'policy':
+			stderr("%s:%d: syntax error" % (filename, lineno))
+			return 1
+		
+		policy = arr[4]
+		
+		if not policy in ('allow', 'deny', 'reject', 'accept', 'drop'):
+			stderr("%s:%d: syntax error: unknown policy '%s'" % (filename, lineno, policy))
+			return 1
+		
+		# allow for common aliases to be used here
+		if policy == 'accept':
+			policy = 'allow'
+		
+		if policy == 'drop':
+			policy = 'deny'
+		
+		# TODO emit default policy setting code
+		debug('emit: %s policy %s' % (chain, policy))
+	
+	else:
+		if len(arr) == 2:
+			# change the current chain
+			firewater_globals.CURRENT_CHAIN = chain
+			
+			debug('CURRENT_CHAIN == %s' % firewater_globals.CURRENT_CHAIN)
+		
+		else:
+			stderr("%s:%d: syntax error" % (filename, lineno))
+			return 1
+
+	return 0
+
+
 # EOB

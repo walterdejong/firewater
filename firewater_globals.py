@@ -23,6 +23,7 @@ HOSTS = { 'any' : [ '0.0.0.0/0' ],
 # dictionary with user-defined ServiceObjects
 SERVICES = {}
 
+# the chain that rules have effect on right now
+CURRENT_CHAIN = 'incoming'
 
 # EOB
-
