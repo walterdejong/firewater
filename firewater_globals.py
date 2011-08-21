@@ -26,4 +26,7 @@ SERVICES = {}
 # the chain that rules have effect on right now
 CURRENT_CHAIN = 'incoming'
 
+# static list of known protocols
+KNOWN_PROTOCOLS = ('tcp', 'udp', 'ip', 'icmp', 'gre')
+
 # EOB

@@ -460,7 +460,7 @@ def parse_service(arr, filename, lineno):
 	
 	obj = firewater_service.ServiceObject(alias)
 	
-	if arr[2] in ('tcp', 'udp', 'icmp', 'gre'):
+	if arr[2] in firewater_globals.KNOWN_PROTOCOLS:
 		obj.proto = arr.pop(2)
 	
 	if len(arr) < 3:
@@ -625,6 +625,184 @@ def parse_chain(arr, filename, lineno):
 			return 1
 
 	return 0
+
+
+def _parse_rule(arr, filename, lineno):
+	'''parse a rule
+	
+	rule syntax:
+	
+	allow|deny|reject [<proto>] [<service>] [from <source> [port <service>]] \
+	    [to <dest>] [on [interface|iface] <iface> [interface]]'''
+	
+	allow = arr.pop(0)
+	
+	if len(arr) < 1:
+		stderr("%s:%d: syntax error, premature end of line" % (filename, lineno))
+		return 1
+	
+	has_proto = False
+	proto = None
+	
+	if arr[0] in firewater_globals.KNOWN_PROTOCOLS:
+		proto = arr.pop(0)
+		has_proto = True
+	
+	has_service = False
+	service = None
+	service_obj = None
+	
+	if len(arr) > 0 and not arr[0] in ('from', 'to', 'on', '--'):
+		# has to be a service
+		service = arr.pop(0)
+		
+		if string.find(string.digits, service[0]) > -1:
+			# numeric service given
+			try:
+				service_port = int(service)
+			except ValueError:
+				stderr("%s:%d: syntax error in number '%s'" % (filename, lineno, service))
+				return 1
+			
+			service_obj = firewater_service.ServiceObject(service, service_port)
+		
+		elif firewater_globals.SERVICES.has_key(service):
+			# previously defined service
+			service_obj = firewater_globals.SERVICES[service]
+		
+		else:
+			# system service
+			service_port = firewater_service.servbyname(service)
+			if service_port == None:
+				stderr("%s:%d: unknown service '%s'" % (filename, lineno, service))
+				return 1
+			
+			service_obj = firewater_service.ServiceObject(service, service_port)
+		
+		has_service = True
+	
+	# the rest of the line can be parsed using tokens
+	
+	has_source = False
+	source_addr = None
+	
+	has_source_port = False
+	source_port = None
+	
+	has_dest = False
+	dest_addr = None
+	
+	has_dest_port = False
+	dest_port = None
+	
+	has_iface = False
+	interface = None
+	
+	while len(arr) > 0:
+		token = arr.pop(0)
+		
+		if len(arr) < 1:
+			stderr("%s:%d: syntax error, premature end of line" % (filename, lineno))
+			return 1
+		
+		if token == 'from':
+			if has_source:
+				stderr("%s:%d: syntax error ('from' is used multiple times)" % (filename, lineno))
+				return 1
+			
+			source_addr = arr.pop(0)
+			has_source = True
+			
+			if len(arr) > 0:
+				# check for source port
+				if arr[0] == 'port':
+					arr.pop(0)
+					
+					if len(arr) < 1:
+						stderr("%s:%d: syntax error, premature end of line" % (filename, lineno))
+						return 1
+					
+					source_port = arr.pop(0)
+					has_source_port = True
+			
+			continue
+		
+		elif token == 'to':
+			if has_dest:
+				stderr("%s:%d: syntax error ('to' is used multiple times)" % (filename, lineno))
+				return 1
+			
+			dest_addr = arr.pop(0)
+			has_dest = True
+			
+			if len(arr) > 0:
+				# check for dest port
+				if arr[0] == 'port':
+					arr.pop(0)
+					
+					if len(arr) < 1:
+						stderr("%s:%d: syntax error, premature end of line" % (filename, lineno))
+						return 1
+					
+					dest_port = arr.pop(0)
+					has_dest_port = True
+			
+			continue
+		
+		elif token == 'on':
+			if has_iface:
+				stderr("%s:%d: syntax error ('on' is used multiple times)" % (filename, lineno))
+				return 1
+			
+			if arr[0] in ('interface', 'iface'):
+				arr.pop(0)
+				
+				if len(arr) < 1:
+					stderr("%s:%d: syntax error, premature end of line" % (filename, lineno))
+					return 1
+			
+			interface = arr.pop(0)
+			has_iface = True
+			
+			if len(arr) > 0 and arr[0] in ('interface', 'iface'):
+				arr.pop(0)
+			
+			continue
+		
+		else:
+			stderr("%s:%d: syntax error, unknown token '%s'" % (filename, lineno, token))
+			return 1
+	
+	debug('rule {')
+	debug('  %s proto %s serv %s' % (allow, proto, service))
+	debug('  source (%s, %s)' % (source_addr, source_port))
+	debug('  dest   (%s, %s)' % (dest_addr, dest_port))
+	debug('  iface   %s' % interface)
+	debug('}')
+	
+	#
+	# TODO source address can be a host, range, group, numeric address or range
+	# TODO dest address can be a host, range, group, numeric address or range
+	# TODO source port can be a numeric port, range, user-defined service, system service
+	# TODO dest port can be a numeric port, range, user-defined service, system service
+	# TODO interface can be user-defined interface (group), system interface
+	# TODO emit rule code
+	#
+	
+	
+	return 0
+
+
+def parse_allow(arr, filename, lineno):
+	return _parse_rule(arr, filename, lineno)
+
+
+def parse_deny(arr, filename, lineno):
+	return _parse_rule(arr, filename, lineno)
+
+
+def parse_reject(arr, filename, lineno):
+	return _parse_rule(arr, filename, lineno)
 
 
 # EOB
