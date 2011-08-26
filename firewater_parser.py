@@ -594,8 +594,8 @@ def _parse_rule(arr, filename, lineno):
 	
 	rule syntax:
 	
-	allow|deny|reject [<proto>] [<service>] [from <source> [port <service>]] \
-	    [to <dest>] [on [interface|iface] <iface> [interface]]'''
+	allow|deny|reject [<proto>] [from <source> [port <service>]] \
+	    [to <dest> [port <service>]] [on [interface|iface] <iface> [interface]]'''
 	
 	allow = arr.pop(0)
 	
@@ -609,16 +609,10 @@ def _parse_rule(arr, filename, lineno):
 		proto = arr.pop(0)
 		has_proto = True
 	
-	has_service = False
-	service = None
-	service_obj = None
+	if len(arr) <= 1:
+		raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 	
-	if len(arr) > 0 and not arr[0] in ('from', 'to', 'on', '--'):
-		# has to be a service
-		service = arr.pop(0)
-		has_service = True
-	
-	# the rest of the line can be parsed using tokens
+	# the line can be parsed using tokens
 	
 	has_source = False
 	source_addr = None
@@ -703,14 +697,13 @@ def _parse_rule(arr, filename, lineno):
 			raise ParseError("%s:%d: syntax error, unknown token '%s'" % (filename, lineno, token))
 	
 	debug('rule {')
-	debug('  %s proto %s serv %s' % (allow, proto, service))
+	debug('  %s proto %s' % (allow, proto))
 	debug('  source (%s, %s)' % (source_addr, source_port))
 	debug('  dest   (%s, %s)' % (dest_addr, dest_port))
 	debug('  iface   %s' % interface)
 	debug('}')
 	
 	try:
-		service_obj = _parse_rule_service(filename, lineno, service)
 		sources = _parse_rule_address(filename, lineno, source_addr)
 		source_port = _parse_rule_service(filename, lineno, source_port)
 		destinations = _parse_rule_address(filename, lineno, dest_addr)
@@ -722,7 +715,6 @@ def _parse_rule(arr, filename, lineno):
 		return
 	
 	debug('rule got {')
-	debug('  service: ' + str(service_obj))
 	debug('  sources: ' + str(sources))
 	debug('  port: ' + str(source_port))
 	debug('  destinations: ' + str(destinations))
