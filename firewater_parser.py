@@ -713,10 +713,18 @@ def _parse_rule(arr, filename, lineno):
 	
 	try:
 		service_obj = _parse_rule_service(filename, lineno, service)
+		sources = _parse_rule_address(filename, lineno, source_addr)
+		destinations = _parse_rule_address(filename, lineno, dest_addr)
 		
 	except ParseError, (err):
 		stderr(err)
 		return
+	
+	debug('rule got {')
+	debug('  service: ' + str(service_obj))
+	debug('  sources: ' + str(sources))
+	debug('  destinations: ' + str(destinations))
+	debug('}')
 	
 	# TODO add some code here
 	pass
@@ -747,6 +755,51 @@ def _parse_rule_service(filename, lineno, service):
 		raise ParseError("%s:%d: unknown service '%s'" % (filename, lineno, service))
 	
 	return firewater_service.ServiceObject(service, service_port)
+
+
+def _parse_rule_address(filename, lineno, address):
+	'''returns list of addresses'''
+	
+	address_list = []
+	
+	if not address:
+		return address_list
+	
+	if firewater_globals.HOSTS.has_key(address):
+		address_list.extend(firewater_globals.HOSTS[address])
+		return address_list
+	
+	# treat as IP address or fqdn
+	if string.find(address, ':') > -1:
+		# treat as IPv6 address
+		address_list.append(address)
+		return address_list
+	
+	if string.find(address, '/') > -1:
+		# treat as network range
+		a = string.split(address, '/')
+		if len(a) != 2:
+			raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, address))
+		
+		if not _is_ipv4_address(a[0]):
+			raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, address))
+		
+		try:
+			bits = int(a[1])
+		except ValueError:
+			raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, address))
+		
+		if bits < 0 or bits > 32:
+			raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, address))
+		
+		address_list.append(address)
+		return address_list
+	
+	if _is_ipv4_address(address):
+		address_list.append(address)
+		return address_list
+	
+	raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, address))
 
 
 def parse_allow(arr, filename, lineno):
