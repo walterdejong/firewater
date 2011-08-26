@@ -602,31 +602,19 @@ def _parse_rule(arr, filename, lineno):
 	if len(arr) < 1:
 		raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 	
-	has_proto = False
 	proto = None
-	
 	if arr[0] in firewater_globals.KNOWN_PROTOCOLS:
 		proto = arr.pop(0)
-		has_proto = True
 	
 	if len(arr) <= 1:
 		raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 	
 	# the line can be parsed using tokens
 	
-	has_source = False
 	source_addr = None
-	
-	has_source_port = False
 	source_port = None
-	
-	has_dest = False
 	dest_addr = None
-	
-	has_dest_port = False
 	dest_port = None
-	
-	has_iface = False
 	interface = None
 	
 	while len(arr) > 0:
@@ -636,11 +624,10 @@ def _parse_rule(arr, filename, lineno):
 			raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 		
 		if token == 'from':
-			if has_source:
+			if source != None:
 				raise ParseError("%s:%d: syntax error ('from' is used multiple times)" % (filename, lineno))
 			
 			source_addr = arr.pop(0)
-			has_source = True
 			
 			if len(arr) > 0:
 				# check for source port
@@ -651,16 +638,14 @@ def _parse_rule(arr, filename, lineno):
 						raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 					
 					source_port = arr.pop(0)
-					has_source_port = True
 			
 			continue
 		
 		elif token == 'to':
-			if has_dest:
+			if dest_addr != None:
 				raise ParseError("%s:%d: syntax error ('to' is used multiple times)" % (filename, lineno))
 			
 			dest_addr = arr.pop(0)
-			has_dest = True
 			
 			if len(arr) > 0:
 				# check for dest port
@@ -671,12 +656,11 @@ def _parse_rule(arr, filename, lineno):
 						raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 					
 					dest_port = arr.pop(0)
-					has_dest_port = True
 			
 			continue
 		
 		elif token == 'on':
-			if has_iface:
+			if interface != None:
 				raise ParseError("%s:%d: syntax error ('on' is used multiple times)" % (filename, lineno))
 			
 			if arr[0] in ('interface', 'iface'):
@@ -686,7 +670,6 @@ def _parse_rule(arr, filename, lineno):
 					raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 			
 			interface = arr.pop(0)
-			has_iface = True
 			
 			if len(arr) > 0 and arr[0] in ('interface', 'iface'):
 				arr.pop(0)
@@ -725,7 +708,7 @@ def _parse_rule(arr, filename, lineno):
 	#
 	# TODO emit rule code:
 	# TODO put this info for every group member into rule objects
-	# TODO so it loops over service/source/port/dest/port/iface
+	# TODO so it loops over source/port/dest/port/iface
 	#
 
 
