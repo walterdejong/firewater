@@ -175,6 +175,8 @@ def parse_interface(arr, filename, lineno):
 		raise ParseError("%s:%d: '%s' requires at least 2 arguments: the interface alias and the real interface name" % (filename, lineno, arr[0]))
 	
 	alias = arr[1]
+	if alias == 'any':
+		raise ParseError("%s:%d: 'any' is a reserved word" % (filename, lineno))
 	
 	iface_list = string.join(arr[2:])
 	iface_list = string.split(iface_list, ',')
@@ -233,6 +235,8 @@ def parse_host(arr, filename, lineno):
 		raise ParseError("%s:%d: 'host' requires at least 2 arguments: the host alias and the IP address or fqdn" % (filename, lineno))
 	
 	alias = arr[1]
+	if alias == 'any':
+		raise ParseError("%s:%d: 'any' is a reserved word" % (filename, lineno))
 	
 	host_list = string.join(arr[2:])
 	host_list = string.replace(host_list, ' ', '')
@@ -300,6 +304,8 @@ def parse_range(arr, filename, lineno):
 		raise ParseError("%s:%d: 'range' requires at least 2 arguments: the range alias and the address range" % (filename, lineno))
 	
 	alias = arr[1]
+	if alias == 'any':
+		raise ParseError("%s:%d: 'any' is a reserved word" % (filename, lineno))
 	
 	ranges_list = string.join(arr[2:])
 	ranges_list = string.replace(ranges_list, ' ', '')
@@ -359,6 +365,8 @@ def parse_group(arr, filename, lineno):
 		raise ParseError("%s:%d: 'group' requires at least 2 arguments: the group alias and at least 1 member" % (filename, lineno))
 	
 	alias = arr[1]
+	if alias == 'any':
+		raise ParseError("%s:%d: 'any' is a reserved word" % (filename, lineno))
 	
 	group_list = string.join(arr[2:], ',')
 	group_list = string.replace(group_list, ' ', '')
@@ -430,6 +438,8 @@ def parse_service(arr, filename, lineno):
 		raise ParseError("%s:%d: '%s' requires at least 2 arguments: the service alias and at least 1 property" % (filename, lineno, arr[0]))
 	
 	alias = arr[1]
+	if alias == 'any':
+		raise ParseError("%s:%d: 'any' is a reserved word" % (filename, lineno))
 	
 	if firewater_globals.SERVICES.has_key(alias):
 		raise ParseError("%s:%d: redefinition of service %s" % (filename, lineno, alias))
@@ -699,41 +709,38 @@ def _parse_rule(arr, filename, lineno):
 	debug('  iface   %s' % interface)
 	debug('}')
 	
-	#
-	# TODO source port can be a numeric port, range, user-defined service, system service
-	# TODO dest port can be a numeric port, range, user-defined service, system service
-	# TODO interface can be user-defined interface (group), system interface
-	#
-	# TODO emit rule code:
-	# TODO put this info for every group member into rule objects
-	# TODO so it loops over service/source/port/dest/port/iface
-	#
-	
 	try:
 		service_obj = _parse_rule_service(filename, lineno, service)
 		sources = _parse_rule_address(filename, lineno, source_addr)
 		source_port = _parse_rule_service(filename, lineno, source_port)
 		destinations = _parse_rule_address(filename, lineno, dest_addr)
 		dest_port = _parse_rule_service(filename, lineno, dest_port)
-		
-	except ParseError, (err):
-		stderr(err)
+		ifaces = _parse_rule_interfaces(filename, lineno, interface)
+	
+	except ParseError, (parse_error):
+		parse_error.perror()
 		return
 	
 	debug('rule got {')
 	debug('  service: ' + str(service_obj))
 	debug('  sources: ' + str(sources))
+	debug('  port: ' + str(source_port))
 	debug('  destinations: ' + str(destinations))
+	debug('  port: ' + str(dest_port))
+	debug('  ifaces: ' + str(ifaces))
 	debug('}')
 	
-	# TODO add some code here
-	pass
+	#
+	# TODO emit rule code:
+	# TODO put this info for every group member into rule objects
+	# TODO so it loops over service/source/port/dest/port/iface
+	#
 
 
 def _parse_rule_service(filename, lineno, service):
 	'''returns ServiceObject for service'''
 	
-	if not service:
+	if not service or service == 'any':
 		return firewater_service.ServiceObject()
 	
 	if string.find(string.digits, service[0]) > -1:
@@ -762,7 +769,7 @@ def _parse_rule_address(filename, lineno, address):
 	
 	address_list = []
 	
-	if not address:
+	if not address or address == 'any':
 		return address_list
 	
 	if firewater_globals.HOSTS.has_key(address):
@@ -800,6 +807,20 @@ def _parse_rule_address(filename, lineno, address):
 		return address_list
 	
 	raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, address))
+
+
+def _parse_rule_interfaces(filename, lineno, interface):
+	iface_list = []
+	
+	if not interface or interface == 'any':
+		return iface_list
+	
+	if firewater_globals.INTERFACES.has_key(interface):
+		iface_list.extend(firewater_globals.INTERFACES[interface])
+		return iface_list
+	
+	iface_list.append(interface)
+	return iface_list
 
 
 def parse_allow(arr, filename, lineno):
