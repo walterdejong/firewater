@@ -27,6 +27,23 @@ import sys
 import string
 
 
+class ParseError(Exception):
+	'''error message class for parse errors'''
+	
+	def __init__(self, msg):
+		Exception.__init__(self)
+		self.msg = msg
+	
+	def __repr__(self):
+		return self.msg
+	
+	def __str__(self):
+		return self.msg
+	
+	def perror(self):
+		stderr(self.msg)
+
+
 def read_input_file(filename):
 	'''read a (included) input file
 	Returns 0 on success, or error count on errors'''
@@ -89,37 +106,34 @@ def read_input_file(filename):
 			errors = errors + 1
 			continue
 		
-		errors = errors + func(arr, filename, lineno)
+		try:
+			func(arr, filename, lineno)
+		except ParseError, (parse_error):
+			parse_error.perror()
+			errors = errors + 1
 	
 	f.close()
 	return errors
 
 
-#
-# parse_ functions return the number of errors in the line
-# This enables the 'include' keyword to return more than 1 error
-#
-
 def _parse_boolean(param, value, filename, lineno):
 	value = string.lower(value)
 	if value in firewater_param.BOOLEAN_VALUE_TRUE:
-		return (0, True)
+		return True
 	
 	elif value in firewater_param.BOOLEAN_VALUE_FALSE:
-		return (0, False)
+		return False
 	
-	stderr('%s:%d: invalid argument for %s' % (filename, lineno, param))
-	return (1, False)
+	raise ParseError('%s:%d: invalid argument for %s' % (filename, lineno, param))
 
 
 def _parse_integer(param, value, filename, lineno, radix = 10):
 	try:
 		n = int(value, radix)
 	except ValueError:
-		stderr('%s:%d: invalid argument for %s' % (filename, lineno, param))
-		return (1, 0)
+		raise ParseError('%s:%d: invalid argument for %s' % (filename, lineno, param))
 	
-	return (0, n)
+	return n
 
 
 def _is_ipv4_address(addr):
@@ -153,13 +167,12 @@ def parse_include(arr, filename, lineno):
 
 
 def parse_iface(arr, filename, lineno):
-	return parse_interface(arr, filename, lineno)
+	parse_interface(arr, filename, lineno)
 
 
 def parse_interface(arr, filename, lineno):
 	if len(arr) < 3:
-		stderr("%s:%d: '%s' requires at least 2 arguments: the interface alias and the real interface name" % (filename, lineno, arr[0]))
-		return 1
+		raise ParseError("%s:%d: '%s' requires at least 2 arguments: the interface alias and the real interface name" % (filename, lineno, arr[0]))
 	
 	alias = arr[1]
 	
@@ -167,12 +180,10 @@ def parse_interface(arr, filename, lineno):
 	iface_list = string.split(iface_list, ',')
 	
 	if alias in iface_list:
-		stderr("%s:%d: interface %s references back to itself" % (filename, lineno, alias))
-		return 1
+		raise ParseError("%s:%d: interface %s references back to itself" % (filename, lineno, alias))
 	
 	if firewater_globals.INTERFACES.has_key(alias):
-		stderr("%s:%d: redefinition of interface %s" % (filename, lineno, alias))
-		return 1
+		raise ParseError("%s:%d: redefinition of interface %s" % (filename, lineno, alias))
 	
 	# expand the list by filling in any previously defined aliases
 	new_iface_list = []
@@ -193,38 +204,33 @@ def parse_interface(arr, filename, lineno):
 	for iface in new_iface_list:
 		if not iface in all_ifaces:
 			all_ifaces.append(iface)
-	
-	return 0
 
 
 def parse_debug(arr, filename, lineno):
 	if len(arr) < 2:
-		stderr("%s:%d: usage: debug interfaces|hosts|services" % (filename, lineno))
-		return 1
+		raise ParseError("%s:%d: usage: debug interfaces|hosts|services" % (filename, lineno))
 	
 	if arr[1] in ('iface', 'interfaces'):
 		print 'firewater_globals.INTERFACES ==', firewater_globals.INTERFACES
 		print
-		return 0
+		return
 	
-	elif arr[1] in ('host', 'hosts'):
+	if arr[1] in ('host', 'hosts'):
 		print 'firewater_globals.HOSTS ==', firewater_globals.HOSTS
 		print
-		return 0
+		return
 	
-	elif arr[1] in ('services', 'serv'):
+	if arr[1] in ('services', 'serv'):
 		print 'firewater_globals.SERVICES ==', firewater_globals.SERVICES
 		print
-		return 0
+		return
 	
-	stderr("%s:%d: don't know how to debug '%s'" % (filename, lineno, arr[1]))
-	return 1
+	raise ParseError("%s:%d: don't know how to debug '%s'" % (filename, lineno, arr[1]))
 
 
 def parse_host(arr, filename, lineno):
 	if len(arr) < 3:
-		stderr("%s:%d: 'host' requires at least 2 arguments: the host alias and the IP address or fqdn" % (filename, lineno))
-		return 1
+		raise ParseError("%s:%d: 'host' requires at least 2 arguments: the host alias and the IP address or fqdn" % (filename, lineno))
 	
 	alias = arr[1]
 	
@@ -234,12 +240,10 @@ def parse_host(arr, filename, lineno):
 	host_list = string.split(host_list, ',')
 	
 	if alias in host_list:
-		stderr("%s:%d: host %s references back to itself" % (filename, lineno, alias))
-		return 1
+		raise ParseError("%s:%d: host %s references back to itself" % (filename, lineno, alias))
 	
 	if firewater_globals.HOSTS.has_key(alias):
-		stderr("%s:%d: redefinition of host %s" % (filename, lineno, alias))
-		return 1
+		raise ParseError("%s:%d: redefinition of host %s" % (filename, lineno, alias))
 	
 	# expand the list by filling in any previously defined aliases
 	new_host_list = []
@@ -257,16 +261,13 @@ def parse_host(arr, filename, lineno):
 				# treat as network range
 				a = string.split(host, '/')
 				if len(a) != 2:
-					stderr("%s:%d: invalid host address '%s'" % (filename, lineno, host))
-					return 1
+					raise ParseError("%s:%d: invalid host address '%s'" % (filename, lineno, host))
 				
 				if not _is_ipv4_address(a[0]):
-					stderr("%s:%d: invalid host address '%s'" % (filename, lineno, host))
-					return 1
+					raise ParseError("%s:%d: invalid host address '%s'" % (filename, lineno, host))
 				
 				if a[1] != '32':
-					stderr("%s:%d: invalid host address '%s'" % (filename, lineno, host))
-					return 1
+					raise ParseError("%s:%d: invalid host address '%s'" % (filename, lineno, host))
 				
 				pass
 			
@@ -278,8 +279,7 @@ def parse_host(arr, filename, lineno):
 				# treat as fqdn, so resolve the address
 				addrs = firewater_resolv.resolv(host)
 				if addrs == None:	# error
-					stderr("%s:%d: failed to resolve '%s'" % (filename, lineno, host))
-					return 1
+					raise ParseError("%s:%d: failed to resolve '%s'" % (filename, lineno, host))
 				
 				for addr in addrs:
 					if not addr in new_host_list:
@@ -293,14 +293,11 @@ def parse_host(arr, filename, lineno):
 	debug('new host: %s:%s' % (alias, new_host_list))
 	
 	firewater_globals.HOSTS[alias] = new_host_list
-	
-	return 0
 
 
 def parse_range(arr, filename, lineno):
 	if len(arr) < 3:
-		stderr("%s:%d: 'range' requires at least 2 arguments: the range alias and the address range" % (filename, lineno))
-		return 1
+		raise ParseError("%s:%d: 'range' requires at least 2 arguments: the range alias and the address range" % (filename, lineno))
 	
 	alias = arr[1]
 	
@@ -310,13 +307,11 @@ def parse_range(arr, filename, lineno):
 	ranges_list = string.split(ranges_list, ',')
 	
 	if alias in ranges_list:
-		stderr("%s:%d: range %s references back to itself" % (filename, lineno, alias))
-		return 1
+		raise ParseError("%s:%d: range %s references back to itself" % (filename, lineno, alias))
 	
 	# note that ranges are stored in the same way as hosts
 	if firewater_globals.HOSTS.has_key(alias):
-		stderr("%s:%d: redefinition of range or host %s" % (filename, lineno, alias))
-		return 1
+		raise ParseError("%s:%d: redefinition of range or host %s" % (filename, lineno, alias))
 	
 	# expand the list by filling in any previously defined aliases
 	new_ranges_list = []
@@ -335,26 +330,21 @@ def parse_range(arr, filename, lineno):
 				# treat as network range
 				a = string.split(host, '/')
 				if len(a) != 2:
-					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, host))
-					return 1
+					raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, host))
 				
 				if not _is_ipv4_address(a[0]):
-					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, host))
-					return 1
+					raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, host))
 				
 				try:
 					bits = int(a[1])
 				except ValueError:
-					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, host))
-					return 1
+					raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, host))
 				
 				if bits < 0 or bits > 32:
-					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, host))
-					return 1
+					raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, host))
 			
 			else:
-				stderr("%s:%d: invalid address range '%s'" % (filename, lineno, host))
-				return 1
+				raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, host))
 			
 			if not host in new_ranges_list:
 				new_ranges_list.append(host)
@@ -363,13 +353,10 @@ def parse_range(arr, filename, lineno):
 	
 	firewater_globals.HOSTS[alias] = new_ranges_list
 
-	return 0
-
 
 def parse_group(arr, filename, lineno):
 	if len(arr) < 3:
-		stderr("%s:%d: 'group' requires at least 2 arguments: the group alias and at least 1 member" % (filename, lineno))
-		return 1
+		raise ParseError("%s:%d: 'group' requires at least 2 arguments: the group alias and at least 1 member" % (filename, lineno))
 	
 	alias = arr[1]
 	
@@ -379,13 +366,11 @@ def parse_group(arr, filename, lineno):
 	group_list = string.split(group_list, ',')
 	
 	if alias in group_list:
-		stderr("%s:%d: range %s references back to itself" % (filename, lineno, alias))
-		return 1
+		raise ParseError("%s:%d: range %s references back to itself" % (filename, lineno, alias))
 	
 	# note that group are stored in the same way as groups
 	if firewater_globals.HOSTS.has_key(alias):
-		stderr("%s:%d: redefinition of range or group %s" % (filename, lineno, alias))
-		return 1
+		raise ParseError("%s:%d: redefinition of range or group %s" % (filename, lineno, alias))
 	
 	# expand the list by filling in any previously defined aliases
 	new_group_list = []
@@ -403,29 +388,24 @@ def parse_group(arr, filename, lineno):
 				# treat as network range
 				a = string.split(group, '/')
 				if len(a) != 2:
-					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, group))
-					return 1
+					raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, group))
 				
 				if not _is_ipv4_address(a[0]):
-					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, group))
-					return 1
+					raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, group))
 				
 				try:
 					bits = int(a[1])
 				except ValueError:
-					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, group))
-					return 1
+					raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, group))
 				
 				if bits < 0 or bits > 32:
-					stderr("%s:%d: invalid address range '%s'" % (filename, lineno, group))
-					return 1
+					raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, group))
 			
 			else:
 				# treat as fqdn, so resolve the address
 				addrs = firewater_resolv.resolv(group)
 				if addrs == None:	# error
-					stderr("%s:%d: failed to resolve '%s'" % (filename, lineno, group))
-					return 1
+					raise ParseError("%s:%d: failed to resolve '%s'" % (filename, lineno, group))
 				
 				for addr in addrs:
 					if not addr in new_group_list:
@@ -439,8 +419,6 @@ def parse_group(arr, filename, lineno):
 	debug('new group: %s:%s' % (alias, new_group_list))
 	
 	firewater_globals.HOSTS[alias] = new_group_list
-	
-	return 0
 
 
 def parse_serv(arr, filename, lineno):
@@ -449,14 +427,12 @@ def parse_serv(arr, filename, lineno):
 
 def parse_service(arr, filename, lineno):
 	if len(arr) < 3:
-		stderr("%s:%d: '%s' requires at least 2 arguments: the service alias and at least 1 property" % (filename, lineno, arr[0]))
-		return 1
+		raise ParseError("%s:%d: '%s' requires at least 2 arguments: the service alias and at least 1 property" % (filename, lineno, arr[0]))
 	
 	alias = arr[1]
 	
 	if firewater_globals.SERVICES.has_key(alias):
-		stderr("%s:%d: redefinition of service %s" % (filename, lineno, alias))
-		return 1
+		raise ParseError("%s:%d: redefinition of service %s" % (filename, lineno, alias))
 	
 	obj = firewater_service.ServiceObject(alias)
 	
@@ -464,8 +440,7 @@ def parse_service(arr, filename, lineno):
 		obj.proto = arr.pop(2)
 	
 	if len(arr) < 3:
-		stderr("%s:%d: missing service or port number" % (filename, lineno))
-		return 1
+		raise ParseError("%s:%d: missing service or port number" % (filename, lineno))
 	
 	if string.find(string.digits, arr[2][0]) > -1:
 		# treat as port number or range
@@ -475,28 +450,23 @@ def parse_service(arr, filename, lineno):
 			
 			port_arr = string.split(port_range, '-')
 			if len(port_arr) != 2:
-				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
-				return 1
+				raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
 			
 			try:
 				obj.port = int(port_arr[0])
 			except ValueError:
-				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
-				return 1
+				raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
 			
 			try:
 				obj.endport = int(port_arr[1])
 			except ValueError:
-				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
-				return 1
+				raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
 			
 			if obj.port < -1 or obj.port > 65535:
-				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
-				return 1
+				raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
 			
 			if obj.endport < -1 or obj.endport > 65535 or obj.endport < obj.port:
-				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
-				return 1
+				raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
 		
 		elif string.find(arr[2], ':') > -1:
 			# treat as port range (same code as above, split by ':') (yeah stupid, I know)
@@ -504,41 +474,34 @@ def parse_service(arr, filename, lineno):
 			
 			port_arr = string.split(port_range, ':')
 			if len(port_arr) != 2:
-				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
-				return 1
+				raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
 			
 			try:
 				obj.port = int(port_arr[0])
 			except ValueError:
-				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
-				return 1
+				raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
 			
 			try:
 				obj.endport = int(port_arr[1])
 			except ValueError:
-				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
-				return 1
+				raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
 			
 			if obj.port < -1 or obj.port > 65535:
-				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
-				return 1
+				raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
 			
 			if obj.endport < -1 or obj.endport > 65535 or obj.endport < obj.port:
-				stderr("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
-				return 1
+				raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
 		
 		else:
 			# single port number
 			try:
 				obj.port = int(arr[2])
 			except ValueError:
-				stderr("%s:%d: invalid port number '%s'" % (filename, lineno, arr[2]))
-				return 1
+				raise ParseError("%s:%d: invalid port number '%s'" % (filename, lineno, arr[2]))
 	
 	else:
 		if arr[2] == alias:
-			stderr("%s:%d: service %s references back to itself" % (filename, lineno))
-			return -1
+			raise ParseError("%s:%d: service %s references back to itself" % (filename, lineno))
 		
 		if firewater_globals.SERVICES.has_key(arr[2]):
 			obj2 = firewater_globals.SERVICES[arr[2]]
@@ -555,8 +518,7 @@ def parse_service(arr, filename, lineno):
 			# treat as system service name
 			obj.port = firewater_service.servbyname(arr[2])
 			if obj.port == None:
-				stderr("%s:%d: no such service '%s'" % (filename, lineno, arr[2]))
-				return 1
+				raise ParseError("%s:%d: no such service '%s'" % (filename, lineno, arr[2]))
 	
 	if len(arr) > 3:
 		if arr[3] in ('iface', 'interface'):
@@ -571,37 +533,30 @@ def parse_service(arr, filename, lineno):
 					obj.iface.append(arr[4])
 			
 			else:
-				stderr("%s:%d: too many arguments to '%s'" % (filename, lineno, arr[0]))
-				return 1
+				raise ParseError("%s:%d: too many arguments to '%s'" % (filename, lineno, arr[0]))
 	
 	debug('new service: %s:%s' % (alias, obj))
 	
 	firewater_globals.SERVICES[alias] = obj
-	
-	return 0
 
 
 def parse_chain(arr, filename, lineno):
 	if len(arr) < 2:
-		stderr("%s:%d: syntax error" % (filename, lineno))
-		return 1
+		raise ParseError("%s:%d: syntax error" % (filename, lineno))
 	
 	chain = arr[1]
 	
 	if not chain in ('incoming', 'outgoing', 'forwarding'):
-		stderr("%s:%d: syntax error: unknown chain '%s'" % (filename, lineno, chain))
-		return 1
+		raise ParseError("%s:%d: syntax error: unknown chain '%s'" % (filename, lineno, chain))
 	
 	if len(arr) == 5:
 		if arr[2] != 'default' or arr[3] != 'policy':
-			stderr("%s:%d: syntax error" % (filename, lineno))
-			return 1
+			raise ParseError("%s:%d: syntax error" % (filename, lineno))
 		
 		policy = arr[4]
 		
 		if not policy in ('allow', 'deny', 'reject', 'accept', 'drop'):
-			stderr("%s:%d: syntax error: unknown policy '%s'" % (filename, lineno, policy))
-			return 1
+			raise ParseError("%s:%d: syntax error: unknown policy '%s'" % (filename, lineno, policy))
 		
 		# allow for common aliases to be used here
 		if policy == 'accept':
@@ -621,10 +576,7 @@ def parse_chain(arr, filename, lineno):
 			debug('CURRENT_CHAIN == %s' % firewater_globals.CURRENT_CHAIN)
 		
 		else:
-			stderr("%s:%d: syntax error" % (filename, lineno))
-			return 1
-
-	return 0
+			raise ParseError("%s:%d: syntax error" % (filename, lineno))
 
 
 def _parse_rule(arr, filename, lineno):
@@ -638,8 +590,7 @@ def _parse_rule(arr, filename, lineno):
 	allow = arr.pop(0)
 	
 	if len(arr) < 1:
-		stderr("%s:%d: syntax error, premature end of line" % (filename, lineno))
-		return 1
+		raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 	
 	has_proto = False
 	proto = None
@@ -655,30 +606,6 @@ def _parse_rule(arr, filename, lineno):
 	if len(arr) > 0 and not arr[0] in ('from', 'to', 'on', '--'):
 		# has to be a service
 		service = arr.pop(0)
-		
-		if string.find(string.digits, service[0]) > -1:
-			# numeric service given
-			try:
-				service_port = int(service)
-			except ValueError:
-				stderr("%s:%d: syntax error in number '%s'" % (filename, lineno, service))
-				return 1
-			
-			service_obj = firewater_service.ServiceObject(service, service_port)
-		
-		elif firewater_globals.SERVICES.has_key(service):
-			# previously defined service
-			service_obj = firewater_globals.SERVICES[service]
-		
-		else:
-			# system service
-			service_port = firewater_service.servbyname(service)
-			if service_port == None:
-				stderr("%s:%d: unknown service '%s'" % (filename, lineno, service))
-				return 1
-			
-			service_obj = firewater_service.ServiceObject(service, service_port)
-		
 		has_service = True
 	
 	# the rest of the line can be parsed using tokens
@@ -702,13 +629,11 @@ def _parse_rule(arr, filename, lineno):
 		token = arr.pop(0)
 		
 		if len(arr) < 1:
-			stderr("%s:%d: syntax error, premature end of line" % (filename, lineno))
-			return 1
+			raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 		
 		if token == 'from':
 			if has_source:
-				stderr("%s:%d: syntax error ('from' is used multiple times)" % (filename, lineno))
-				return 1
+				raise ParseError("%s:%d: syntax error ('from' is used multiple times)" % (filename, lineno))
 			
 			source_addr = arr.pop(0)
 			has_source = True
@@ -719,8 +644,7 @@ def _parse_rule(arr, filename, lineno):
 					arr.pop(0)
 					
 					if len(arr) < 1:
-						stderr("%s:%d: syntax error, premature end of line" % (filename, lineno))
-						return 1
+						raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 					
 					source_port = arr.pop(0)
 					has_source_port = True
@@ -729,8 +653,7 @@ def _parse_rule(arr, filename, lineno):
 		
 		elif token == 'to':
 			if has_dest:
-				stderr("%s:%d: syntax error ('to' is used multiple times)" % (filename, lineno))
-				return 1
+				raise ParseError("%s:%d: syntax error ('to' is used multiple times)" % (filename, lineno))
 			
 			dest_addr = arr.pop(0)
 			has_dest = True
@@ -741,8 +664,7 @@ def _parse_rule(arr, filename, lineno):
 					arr.pop(0)
 					
 					if len(arr) < 1:
-						stderr("%s:%d: syntax error, premature end of line" % (filename, lineno))
-						return 1
+						raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 					
 					dest_port = arr.pop(0)
 					has_dest_port = True
@@ -751,15 +673,13 @@ def _parse_rule(arr, filename, lineno):
 		
 		elif token == 'on':
 			if has_iface:
-				stderr("%s:%d: syntax error ('on' is used multiple times)" % (filename, lineno))
-				return 1
+				raise ParseError("%s:%d: syntax error ('on' is used multiple times)" % (filename, lineno))
 			
 			if arr[0] in ('interface', 'iface'):
 				arr.pop(0)
 				
 				if len(arr) < 1:
-					stderr("%s:%d: syntax error, premature end of line" % (filename, lineno))
-					return 1
+					raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 			
 			interface = arr.pop(0)
 			has_iface = True
@@ -770,8 +690,7 @@ def _parse_rule(arr, filename, lineno):
 			continue
 		
 		else:
-			stderr("%s:%d: syntax error, unknown token '%s'" % (filename, lineno, token))
-			return 1
+			raise ParseError("%s:%d: syntax error, unknown token '%s'" % (filename, lineno, token))
 	
 	debug('rule {')
 	debug('  %s proto %s serv %s' % (allow, proto, service))
@@ -786,23 +705,60 @@ def _parse_rule(arr, filename, lineno):
 	# TODO source port can be a numeric port, range, user-defined service, system service
 	# TODO dest port can be a numeric port, range, user-defined service, system service
 	# TODO interface can be user-defined interface (group), system interface
-	# TODO emit rule code
+	#
+	# TODO emit rule code:
+	# TODO put this info for every group member into rule objects
+	# TODO so it loops over service/source/port/dest/port/iface
 	#
 	
+	try:
+		service_obj = _parse_rule_service(filename, lineno, service)
+		
+	except ParseError, (err):
+		stderr(err)
+		return
 	
-	return 0
+	# TODO add some code here
+	pass
+
+
+def _parse_rule_service(filename, lineno, service):
+	'''returns ServiceObject for service'''
+	
+	if not service:
+		return firewater_service.ServiceObject()
+	
+	if string.find(string.digits, service[0]) > -1:
+		# numeric service given
+		try:
+			service_port = int(service)
+		except ValueError:
+			raise ParseError("%s:%d: syntax error in number '%s'" % (filename, lineno, service))
+		
+		return firewater_service.ServiceObject(service, service_port)
+	
+	if firewater_globals.SERVICES.has_key(service):
+		# previously defined service
+		return firewater_globals.SERVICES[service]
+	
+	# system service
+	service_port = firewater_service.servbyname(service)
+	if service_port == None:
+		raise ParseError("%s:%d: unknown service '%s'" % (filename, lineno, service))
+	
+	return firewater_service.ServiceObject(service, service_port)
 
 
 def parse_allow(arr, filename, lineno):
-	return _parse_rule(arr, filename, lineno)
+	_parse_rule(arr, filename, lineno)
 
 
 def parse_deny(arr, filename, lineno):
-	return _parse_rule(arr, filename, lineno)
+	_parse_rule(arr, filename, lineno)
 
 
 def parse_reject(arr, filename, lineno):
-	return _parse_rule(arr, filename, lineno)
+	_parse_rule(arr, filename, lineno)
 
 
 # EOB
