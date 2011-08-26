@@ -700,8 +700,6 @@ def _parse_rule(arr, filename, lineno):
 	debug('}')
 	
 	#
-	# TODO source address can be a host, range, group, numeric address or range
-	# TODO dest address can be a host, range, group, numeric address or range
 	# TODO source port can be a numeric port, range, user-defined service, system service
 	# TODO dest port can be a numeric port, range, user-defined service, system service
 	# TODO interface can be user-defined interface (group), system interface
@@ -714,7 +712,9 @@ def _parse_rule(arr, filename, lineno):
 	try:
 		service_obj = _parse_rule_service(filename, lineno, service)
 		sources = _parse_rule_address(filename, lineno, source_addr)
+		source_port = _parse_rule_service(filename, lineno, source_port)
 		destinations = _parse_rule_address(filename, lineno, dest_addr)
+		dest_port = _parse_rule_service(filename, lineno, dest_port)
 		
 	except ParseError, (err):
 		stderr(err)
