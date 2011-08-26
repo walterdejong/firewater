@@ -624,7 +624,7 @@ def _parse_rule(arr, filename, lineno):
 			raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 		
 		if token == 'from':
-			if source != None:
+			if source_addr != None:
 				raise ParseError("%s:%d: syntax error ('from' is used multiple times)" % (filename, lineno))
 			
 			source_addr = arr.pop(0)
@@ -706,10 +706,31 @@ def _parse_rule(arr, filename, lineno):
 	debug('}')
 	
 	#
-	# TODO emit rule code:
-	# TODO put this info for every group member into rule objects
-	# TODO so it loops over source/port/dest/port/iface
+	# emit rule code
 	#
+	
+	if not proto:
+		proto = 'all'
+	
+	if source_port.endport > 0:
+		src_port = '%d-%d' % (source_port.port, source_port.endport)
+	else:
+		src_port = '%d' % source_port.port
+	
+	if dest_port.endport > 0:
+		dest_port = '%d-%d' % (dest_port.port, dest_port.endport)
+	else:
+		dest_port = '%d' % dest_port.port
+	
+	# TODO emit rule code via a plucin class or whatever
+	
+	for src in sources:
+		for dest in destinations:
+			if not ifaces:
+				debug('%s %s %s eq %s %s eq %s' % (allow, proto, src, src_port, dest, dest_port))
+			else:
+				for iface in ifaces:
+					debug('%s %s %s eq %s %s eq %s on %s' % (allow, proto, src, src_port, dest, dest_port, iface))
 
 
 def _parse_rule_service(filename, lineno, service):
@@ -745,6 +766,7 @@ def _parse_rule_address(filename, lineno, address):
 	address_list = []
 	
 	if not address or address == 'any':
+		address_list.append('0.0.0.0/0')
 		return address_list
 	
 	if firewater_globals.HOSTS.has_key(address):
