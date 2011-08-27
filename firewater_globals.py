@@ -23,14 +23,17 @@ HOSTS = { 'any' : [ '0.0.0.0/0' ],
 # dictionary with user-defined ServiceObjects
 SERVICES = {}
 
-# the chain that rules have effect on right now
-CURRENT_CHAIN = 'incoming'
-
 # static list of known protocols
 KNOWN_PROTOCOLS = ('tcp', 'udp', 'ip', 'icmp', 'gre')
 
+# static list of known modules
+KNOWN_MODULES = ('iptables')
+
+# currently selected module
+MODULE = 'iptables'
+
 # cache of parsed rules
-# from the parsed rules, the final output is generated
-RULES = []
+# the final output is generated from this bytecode
+BYTECODE = []
 
 # EOB

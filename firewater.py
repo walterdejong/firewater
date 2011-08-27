@@ -14,12 +14,30 @@ import firewater_globals
 from firewater_lib import *
 
 import firewater_parser
+import firewater_bytecode
 
 import os
 import sys
 import string
 import getopt
 import errno
+
+
+def generate():
+	'''loads plugin module and generates the rules'''
+	
+	# insert default 'chain: incoming' rule
+	rule = firewater_bytecode.ByteCode()
+	rule.set_chain('', 0, 'incoming')
+	firewater_globals.BYTECODE.insert(0, rule)
+	
+	# load appropriate module
+	module = __import__('firewater_' + firewater_globals.MODULE)
+	
+	# call module generate()
+	module.begin()
+	module.generate(firewater_globals.BYTECODE)
+	module.end()
 
 
 def usage():
@@ -75,12 +93,23 @@ def get_options():
 
 def main():
 	input_files = get_options()
-
+	
+	# read input: the rule set
+	errors = 0
+	
 	if not input_files:
-		firewater_parser.read_input_file('/dev/stdin')
+		errors = firewater_parser.read_input_file('/dev/stdin')
 	else:
 		for filename in input_files:
-			firewater_parser.read_input_file(filename)
+			errors = firewater_parser.read_input_file(filename)
+	
+	if errors:
+		sys.exit(1)
+	
+	# generate output: the translated rules
+	generate()
+	
+	sys.exit(0)
 
 
 if __name__ == '__main__':

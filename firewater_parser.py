@@ -21,6 +21,7 @@ from firewater_lib import *
 
 import firewater_resolv
 import firewater_service
+import firewater_bytecode
 
 import os
 import sys
@@ -575,16 +576,22 @@ def parse_chain(arr, filename, lineno):
 		if policy == 'drop':
 			policy = 'deny'
 		
-		# TODO emit default policy setting code
-		debug('emit: %s policy %s' % (chain, policy))
+		debug('set chain %s policy %s' % (chain, policy))
+		
+		# emit default policy setting code
+		bytecode = firewater_bytecode.ByteCode()
+		bytecode.set_policy(filename, lineno, chain, policy)
+		firewater_globals.BYTECODE.append(bytecode)
 	
 	else:
 		if len(arr) == 2:
 			# change the current chain
-			firewater_globals.CURRENT_CHAIN = chain
-			
-			debug('CURRENT_CHAIN == %s' % firewater_globals.CURRENT_CHAIN)
+			debug('set current chain %s' % chain)
 		
+			bytecode = firewater_bytecode.ByteCode()
+			bytecode.set_chain(filename, lineno, chain)
+			firewater_globals.BYTECODE.append(bytecode)
+			
 		else:
 			raise ParseError("%s:%d: syntax error" % (filename, lineno))
 
@@ -706,19 +713,23 @@ def _parse_rule(arr, filename, lineno):
 	debug('}')
 	
 	#
-	# save the rules in globals.RULES[]
-	# the rules are generated later, if there were no parse errors
+	# save the rule in globals.BYTECODE[]
+	# the output statements are generated later, if there were no parse errors
 	#
 	
 	for src in sources:
 		for dest in destinations:
 			if not ifaces:
 				debug('%s:%d: %s %s %s eq %s %s eq %s' % (filename, lineno, allow, proto, src, source_port, dest, dest_port))
-				firewater_globals.RULES.append((filename, lineno, allow, proto, src, source_port, dest, dest_port, None))
+				bytecode = firewater_bytecode.ByteCode()
+				bytecode.set_rule(filename, lineno, allow, proto, src, source_port, dest, dest_port, None)
+				firewater_globals.BYTECODE.append(bytecode)
 			else:
 				for iface in ifaces:
 					debug('%s:%d: %s %s %s eq %s %s eq %s on %s' % (filename, lineno, allow, proto, src, source_port, dest, dest_port, iface))
-					firewater_globals.RULES.append((filename, lineno, allow, proto, src, source_port, dest, dest_port, iface))
+					bytecode = firewater_bytecode.ByteCode()
+					bytecode.set_rule(filename, lineno, allow, proto, src, source_port, dest, dest_port, iface)
+					firewater_globals.BYTECODE.append(bytecode)
 
 
 def _parse_rule_service(filename, lineno, service):
