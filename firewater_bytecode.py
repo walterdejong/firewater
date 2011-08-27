@@ -58,27 +58,7 @@ class ByteCode:
 		self.type = ByteCode.TYPE_VERBATIM
 		self.filename = filename
 		self.lineno = lineno
-		self.arr = arr
+		self.text_array = arr
 
-
-def addrule(filename, lineno, allow, proto, src, source_port, dest, dest_port, iface):
-	'''add a rule to the internal cache of rules'''
-	
-	# note: source_port and dest_port are ServiceObjects
-	# note2: the rule is not generated yet
-	
-	if not proto:
-		proto = 'all'
-	
-	if source_port.endport > 0:
-		src_port = '%d-%d' % (source_port.port, source_port.endport)
-	else:
-		src_port = '%d' % source_port.port
-	
-	if dest_port.endport > 0:
-		dest_port = '%d-%d' % (dest_port.port, dest_port.endport)
-	else:
-		dest_port = '%d' % dest_port.port
-	
 
 # EOB
