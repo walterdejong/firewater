@@ -831,4 +831,15 @@ def parse_reject(arr, filename, lineno):
 	_parse_rule(arr, filename, lineno)
 
 
+def parse_echo(arr, filename, lineno):
+	if len(arr) <= 1:
+		str = ''
+	else:
+		str = string.join(arr[1:])
+	
+	bytecode = firewater_bytecode.ByteCode()
+	bytecode.set_echo(filename, lineno, str)
+	firewater_globals.BYTECODE.append(bytecode)
+
+
 # EOB
