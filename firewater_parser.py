@@ -706,31 +706,19 @@ def _parse_rule(arr, filename, lineno):
 	debug('}')
 	
 	#
-	# emit rule code
+	# save the rules in globals.RULES[]
+	# the rules are generated later, if there were no parse errors
 	#
-	
-	if not proto:
-		proto = 'all'
-	
-	if source_port.endport > 0:
-		src_port = '%d-%d' % (source_port.port, source_port.endport)
-	else:
-		src_port = '%d' % source_port.port
-	
-	if dest_port.endport > 0:
-		dest_port = '%d-%d' % (dest_port.port, dest_port.endport)
-	else:
-		dest_port = '%d' % dest_port.port
-	
-	# TODO emit rule code via a plucin class or whatever
 	
 	for src in sources:
 		for dest in destinations:
 			if not ifaces:
-				debug('%s %s %s eq %s %s eq %s' % (allow, proto, src, src_port, dest, dest_port))
+				debug('%s:%d: %s %s %s eq %s %s eq %s' % (filename, lineno, allow, proto, src, source_port, dest, dest_port))
+				firewater_globals.RULES.append((filename, lineno, allow, proto, src, source_port, dest, dest_port, None))
 			else:
 				for iface in ifaces:
-					debug('%s %s %s eq %s %s eq %s on %s' % (allow, proto, src, src_port, dest, dest_port, iface))
+					debug('%s:%d: %s %s %s eq %s %s eq %s on %s' % (filename, lineno, allow, proto, src, source_port, dest, dest_port, iface))
+					firewater_globals.RULES.append((filename, lineno, allow, proto, src, source_port, dest, dest_port, iface))
 
 
 def _parse_rule_service(filename, lineno, service):

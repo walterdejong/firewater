@@ -29,4 +29,8 @@ CURRENT_CHAIN = 'incoming'
 # static list of known protocols
 KNOWN_PROTOCOLS = ('tcp', 'udp', 'ip', 'icmp', 'gre')
 
+# cache of parsed rules
+# from the parsed rules, the final output is generated
+RULES = []
+
 # EOB
