@@ -28,6 +28,10 @@ import sys
 import string
 
 
+# status; are we copying verbatim or not?
+IN_VERBATIM = False
+
+
 class ParseError(Exception):
 	'''error message class for parse errors'''
 	
@@ -72,6 +76,17 @@ def read_input_file(filename):
 		
 		lineno = lineno + 1
 		
+		if IN_VERBATIM:
+			# copy verbatim until the statement 'end verbatim' is reached
+			verbatim_line = string.strip(tmp_line)
+			arr = string.split(string.lower(verbatim_line))
+			# it is tested with an array so that both spaces and tabs work
+			# note that this shadows the 'end' keyword, but only when in verbatim mode
+			if not (len(arr) == 2 and arr[0] == 'end' and arr[1] == 'verbatim'):
+				debug('verbatim line == [%s]' % verbatim_line)
+				firewater_globals.VERBATIM.append(verbatim_line)
+				continue
+		
 		n = string.find(tmp_line, '#')
 		if n >= 0:
 			tmp_line = tmp_line[:n]		# strip comment
@@ -92,11 +107,6 @@ def read_input_file(filename):
 		
 		line = ''	# <-- line is being reset here; use arr[] from here on
 		
-		if len(arr) <= 1:
-			stderr('%s:%d: syntax error' % (filename, lineno))
-			errors = errors + 1
-			continue
-		
 		keyword = string.lower(arr[0])
 		
 		# get the parser function
@@ -112,6 +122,10 @@ def read_input_file(filename):
 		except ParseError, (parse_error):
 			parse_error.perror()
 			errors = errors + 1
+	
+	if IN_VERBATIM:
+		ParseError("%s:%d: missing 'end verbatim' statement" % (filename, lineno)).perror()
+		errors = errors + 1
 	
 	f.close()
 	return errors
@@ -840,6 +854,40 @@ def parse_echo(arr, filename, lineno):
 	bytecode = firewater_bytecode.ByteCode()
 	bytecode.set_echo(filename, lineno, str)
 	firewater_globals.BYTECODE.append(bytecode)
+
+
+def parse_verbatim(arr, filename, lineno):
+	global IN_VERBATIM
+	
+	if len(arr) > 1:
+		raise ParseError("%s:%d: syntax error, 'verbatim' does not take any arguments" % (filename, lineno))
+	
+	debug('in verbatim')
+	
+	IN_VERBATIM = True
+	firewater_globals.VERBATIM = []
+
+
+def parse_end(arr, filename, lineno):
+	global IN_VERBATIM
+	
+	if len(arr) > 2:
+		raise ParseError("%s:%d: syntax error, 'end' takes only one argument" % (filename, lineno))
+	
+	if arr[1] == 'verbatim':
+		if not IN_VERBATIM:
+			raise ParseError("%s:%d: 'end' can not be used here" % (filename, lineno))
+		
+		debug('end verbatim')
+		
+		IN_VERBATIM = False
+		
+		bytecode = firewater_bytecode.ByteCode()
+		bytecode.set_verbatim(filename, lineno, firewater_globals.VERBATIM)
+		firewater_globals.BYTECODE.append(bytecode)
+	
+	else:
+		raise ParseError("%s:%d: unknown argument '%s' to 'end'" % (filename, lineno, arr[1]))
 
 
 # EOB

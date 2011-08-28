@@ -58,7 +58,7 @@ class ByteCode:
 		self.type = ByteCode.TYPE_VERBATIM
 		self.filename = filename
 		self.lineno = lineno
-		self.text_array = arr
+		self.text_array = arr[:]
 
 
 # EOB
