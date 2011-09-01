@@ -20,6 +20,8 @@ CURRENT_CHAIN = None
 def begin():
 	debug('firewater_iptables.begin()')
 
+	print '*filter'
+
 
 def generate(bytecode_array):
 	debug('firewater_iptables.generate()')
@@ -47,6 +49,7 @@ def generate(bytecode_array):
 def end():
 	debug('firewater_iptables.end()')
 
+	print 'COMMIT'
 
 
 def _generate_rule(bytecode):
@@ -142,7 +145,9 @@ def _generate_policy(bytecode):
 	else:
 		raise RuntimeError, 'unknown policy %s' % bytecode.policy
 	
-	print '-P %s %s' % (chain, policy)
+	# Note: this also resets the counters on the chain
+	# (does anyone care?)
+	print ':%s %s [0:0]' % (chain, policy)
 
 
 def _change_chain(bytecode):
