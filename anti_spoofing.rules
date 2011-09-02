@@ -1,0 +1,29 @@
+#
+#	/etc/firewater.d/anti_spoofing.rules
+#
+#	Stop illegal addresses from appearing on the public interface
+#	Prereqs: You must define interface(s) named 'public'
+#
+
+chain incoming
+
+deny from 127.0.0.0/8    to any on iface public
+deny from 0.0.0.0/8      to any on iface public
+deny from 10.0.0.0/8     to any on iface public
+deny from 172.16.0.0/20  to any on iface public
+deny from 192.168.0.0/16 to any on iface public
+deny from 169.254.0.0/16 to any on iface public
+deny from 224.0.0.0/4    to any on iface public
+deny from 240.0.0.0/5    to any on iface public
+deny from any to 255.255.255.255 on iface public
+
+# multicast can not go out the public interface(s)
+chain outgoing
+deny from any to 224.0.0.0/4 on iface public
+
+# switch back to chain incoming
+chain incoming
+
+
+# EOB
+
