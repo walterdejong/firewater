@@ -9,6 +9,9 @@
 #   License.
 #
 
+import sys
+sys.path.append('/usr/lib/firewater')
+
 import firewater_globals
 
 from firewater_lib import *
@@ -17,7 +20,6 @@ import firewater_parser
 import firewater_bytecode
 
 import os
-import sys
 import string
 import getopt
 import errno
