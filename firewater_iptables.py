@@ -145,9 +145,7 @@ def _generate_policy(bytecode):
 	else:
 		raise RuntimeError, 'unknown policy %s' % bytecode.policy
 	
-	# Note: this also resets the counters on the chain
-	# (does anyone care?)
-	print ':%s %s [0:0]' % (chain, policy)
+	print ':%s %s' % (chain, policy)
 
 
 def _change_chain(bytecode):
