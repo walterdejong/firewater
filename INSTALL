@@ -1,0 +1,33 @@
+firewater by Walter de Jong <walter@heiho.net> (c) 2011
+
+firewater COMES WITH NO WARRANTY. firewater IS FREE SOFTWARE.
+firewater is distributed under terms described in the GNU General Public
+License.
+
+
+For installing the software, in short, do the following (as root):
+
+
+# copy modules to lib dir
+mkdir /usr/lib/firewater
+cp *.py /usr/lib/firewater/
+
+# put main app in its place
+mv /usr/lib/firewater/firewater.py /usr/sbin/firewater
+
+
+If you want to use the provided init-script for Linux, also do
+these steps:
+
+cp firewater.init /etc/init.d/firewater
+
+# use chkconfig or update-rc.d or whatever to activate the init script
+
+cp firewater.default /etc/default/firewater
+mkdir /etc/firewater.d
+cp anti_spoofing.rules /etc/firewater.d/
+touch /etc/firewater.rules
+
+Edit /etc/default/firewater as you wish.
+Setup your rules using vi (or editor of choice) in /etc/firewater.rules
+
