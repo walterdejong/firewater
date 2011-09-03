@@ -1,6 +1,5 @@
-#! /usr/bin/env python
 #
-#	firewater_lib.py	WJ111
+#	firewater/lib.py	WJ111
 #
 #   firewater by Walter de Jong <walter@heiho.net> (c) 2011
 #
@@ -9,7 +8,7 @@
 #   License.
 #
 
-import firewater_globals
+import firewater.globals
 
 import sys
 
@@ -19,7 +18,7 @@ def stderr(line):
 
 
 def debug(line):
-	if firewater_globals.DEBUG:
+	if firewater.globals.DEBUG:
 		print 'DEBUG:', line
 
 

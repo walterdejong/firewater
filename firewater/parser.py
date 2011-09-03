@@ -1,6 +1,5 @@
-#! /usr/bin/env python
 #
-#	firewater_parser.py	WJ111
+#	firewater/parser.py	WJ111
 #
 #   firewater by Walter de Jong <walter@heiho.net> (c) 2003-2011
 #
@@ -15,13 +14,12 @@
 #	and it will just work (magic trick with getattr(module, functionname))
 #
 
-import firewater_globals
+import firewater.globals
+import firewater.resolv
+import firewater.service
+import firewater.bytecode
 
-from firewater_lib import *
-
-import firewater_resolv
-import firewater_service
-import firewater_bytecode
+from firewater.lib import *
 
 import os
 import sys
@@ -59,7 +57,7 @@ def read_input_file(filename):
 		stderr("failed to read input file '%s' : %s" % (filename, reason))
 		return 1
 	
-	this_module = sys.modules['firewater_parser']
+	this_module = sys.modules['firewater.parser']
 	
 	lineno = 0
 	errors = 0
@@ -84,7 +82,7 @@ def read_input_file(filename):
 			# note that this shadows the 'end' keyword, but only when in verbatim mode
 			if not (len(arr) == 2 and arr[0] == 'end' and arr[1] == 'verbatim'):
 				debug('verbatim line == [%s]' % verbatim_line)
-				firewater_globals.VERBATIM.append(verbatim_line)
+				firewater.globals.VERBATIM.append(verbatim_line)
 				continue
 		
 		n = string.find(tmp_line, '#')
@@ -107,9 +105,9 @@ def read_input_file(filename):
 		
 		# insert the line into bytecode as comment
 		# (this will be displayed in verbose mode)
-		bytecode = firewater_bytecode.ByteCode()
+		bytecode = firewater.bytecode.ByteCode()
 		bytecode.set_comment(filename, lineno, line)
-		firewater_globals.BYTECODE.append(bytecode)
+		firewater.globals.BYTECODE.append(bytecode)
 		
 		line = ''	# <-- line is being reset here; use arr[] from here on
 		
@@ -185,15 +183,15 @@ def parse_interface(arr, filename, lineno):
 	if alias in iface_list:
 		raise ParseError("%s:%d: interface %s references back to itself" % (filename, lineno, alias))
 	
-	if firewater_globals.INTERFACES.has_key(alias):
+	if firewater.globals.INTERFACES.has_key(alias):
 		raise ParseError("%s:%d: redefinition of interface %s" % (filename, lineno, alias))
 	
 	# expand the list by filling in any previously defined aliases
 	new_iface_list = []
 	while len(iface_list) > 0:
 		iface = iface_list.pop(0)
-		if firewater_globals.INTERFACES.has_key(iface):
-			iface_list.extend(firewater_globals.INTERFACES[iface])
+		if firewater.globals.INTERFACES.has_key(iface):
+			iface_list.extend(firewater.globals.INTERFACES[iface])
 		else:
 			# treat as real system interface name
 			if not iface in new_iface_list:
@@ -201,9 +199,9 @@ def parse_interface(arr, filename, lineno):
 	
 	debug('new interface: %s:%s' % (alias, new_iface_list))
 	
-	firewater_globals.INTERFACES[alias] = new_iface_list
+	firewater.globals.INTERFACES[alias] = new_iface_list
 	
-	all_ifaces = firewater_globals.INTERFACES['all']
+	all_ifaces = firewater.globals.INTERFACES['all']
 	for iface in new_iface_list:
 		if not iface in all_ifaces:
 			all_ifaces.append(iface)
@@ -214,17 +212,17 @@ def parse_debug(arr, filename, lineno):
 		raise ParseError("%s:%d: usage: debug interfaces|hosts|services" % (filename, lineno))
 	
 	if arr[1] in ('iface', 'interfaces'):
-		print 'firewater_globals.INTERFACES ==', firewater_globals.INTERFACES
+		print 'firewater.globals.INTERFACES ==', firewater.globals.INTERFACES
 		print
 		return
 	
 	if arr[1] in ('host', 'hosts'):
-		print 'firewater_globals.HOSTS ==', firewater_globals.HOSTS
+		print 'firewater.globals.HOSTS ==', firewater.globals.HOSTS
 		print
 		return
 	
 	if arr[1] in ('services', 'serv'):
-		print 'firewater_globals.SERVICES ==', firewater_globals.SERVICES
+		print 'firewater.globals.SERVICES ==', firewater.globals.SERVICES
 		print
 		return
 	
@@ -247,15 +245,15 @@ def parse_host(arr, filename, lineno):
 	if alias in host_list:
 		raise ParseError("%s:%d: host %s references back to itself" % (filename, lineno, alias))
 	
-	if firewater_globals.HOSTS.has_key(alias):
+	if firewater.globals.HOSTS.has_key(alias):
 		raise ParseError("%s:%d: redefinition of host %s" % (filename, lineno, alias))
 	
 	# expand the list by filling in any previously defined aliases
 	new_host_list = []
 	while len(host_list) > 0:
 		host = host_list.pop(0)
-		if firewater_globals.HOSTS.has_key(host):
-			host_list.extend(firewater_globals.HOSTS[host])
+		if firewater.globals.HOSTS.has_key(host):
+			host_list.extend(firewater.globals.HOSTS[host])
 		else:
 			# treat as IP address or fqdn
 			if string.find(host, ':') > -1:
@@ -282,7 +280,7 @@ def parse_host(arr, filename, lineno):
 			
 			else:
 				# treat as fqdn, so resolve the address
-				addrs = firewater_resolv.resolv(host)
+				addrs = firewater.resolv.resolv(host)
 				if addrs == None:	# error
 					raise ParseError("%s:%d: failed to resolve '%s'" % (filename, lineno, host))
 				
@@ -297,7 +295,7 @@ def parse_host(arr, filename, lineno):
 	
 	debug('new host: %s:%s' % (alias, new_host_list))
 	
-	firewater_globals.HOSTS[alias] = new_host_list
+	firewater.globals.HOSTS[alias] = new_host_list
 
 
 def parse_range(arr, filename, lineno):
@@ -317,7 +315,7 @@ def parse_range(arr, filename, lineno):
 		raise ParseError("%s:%d: range %s references back to itself" % (filename, lineno, alias))
 	
 	# note that ranges are stored in the same way as hosts
-	if firewater_globals.HOSTS.has_key(alias):
+	if firewater.globals.HOSTS.has_key(alias):
 		raise ParseError("%s:%d: redefinition of range or host %s" % (filename, lineno, alias))
 	
 	# expand the list by filling in any previously defined aliases
@@ -325,8 +323,8 @@ def parse_range(arr, filename, lineno):
 	while len(ranges_list) > 0:
 		# 'range' is a Python keyword ... so I use 'host' instead (confusing huh?)
 		host = ranges_list.pop(0)
-		if firewater_globals.HOSTS.has_key(host):
-			ranges_list.extend(firewater_globals.HOSTS[host])
+		if firewater.globals.HOSTS.has_key(host):
+			ranges_list.extend(firewater.globals.HOSTS[host])
 		else:
 			# treat as IP address or fqdn
 			if string.find(host, ':') > -1:
@@ -358,7 +356,7 @@ def parse_range(arr, filename, lineno):
 	
 	debug('new range: %s:%s' % (alias, new_ranges_list))
 	
-	firewater_globals.HOSTS[alias] = new_ranges_list
+	firewater.globals.HOSTS[alias] = new_ranges_list
 
 
 def parse_group(arr, filename, lineno):
@@ -378,15 +376,15 @@ def parse_group(arr, filename, lineno):
 		raise ParseError("%s:%d: range %s references back to itself" % (filename, lineno, alias))
 	
 	# note that group are stored in the same way as groups
-	if firewater_globals.HOSTS.has_key(alias):
+	if firewater.globals.HOSTS.has_key(alias):
 		raise ParseError("%s:%d: redefinition of range or group %s" % (filename, lineno, alias))
 	
 	# expand the list by filling in any previously defined aliases
 	new_group_list = []
 	while len(group_list) > 0:
 		group = group_list.pop(0)
-		if firewater_globals.HOSTS.has_key(group):
-			group_list.extend(firewater_globals.HOSTS[group])
+		if firewater.globals.HOSTS.has_key(group):
+			group_list.extend(firewater.globals.HOSTS[group])
 		else:
 			# treat as IP address or fqdn
 			if string.find(group, ':') > -1:
@@ -412,7 +410,7 @@ def parse_group(arr, filename, lineno):
 			
 			else:
 				# treat as fqdn, so resolve the address
-				addrs = firewater_resolv.resolv(group)
+				addrs = firewater.resolv.resolv(group)
 				if addrs == None:	# error
 					raise ParseError("%s:%d: failed to resolve '%s'" % (filename, lineno, group))
 				
@@ -427,7 +425,7 @@ def parse_group(arr, filename, lineno):
 	
 	debug('new group: %s:%s' % (alias, new_group_list))
 	
-	firewater_globals.HOSTS[alias] = new_group_list
+	firewater.globals.HOSTS[alias] = new_group_list
 
 
 def parse_serv(arr, filename, lineno):
@@ -442,12 +440,12 @@ def parse_service(arr, filename, lineno):
 	if alias == 'any':
 		raise ParseError("%s:%d: 'any' is a reserved word" % (filename, lineno))
 	
-	if firewater_globals.SERVICES.has_key(alias):
+	if firewater.globals.SERVICES.has_key(alias):
 		raise ParseError("%s:%d: redefinition of service %s" % (filename, lineno, alias))
 	
-	obj = firewater_service.ServiceObject(alias)
+	obj = firewater.service.ServiceObject(alias)
 	
-	if arr[2] in firewater_globals.KNOWN_PROTOCOLS:
+	if arr[2] in firewater.globals.KNOWN_PROTOCOLS:
 		obj.proto = arr.pop(2)
 	
 	if len(arr) < 3:
@@ -514,8 +512,8 @@ def parse_service(arr, filename, lineno):
 		if arr[2] == alias:
 			raise ParseError("%s:%d: service %s references back to itself" % (filename, lineno))
 		
-		if firewater_globals.SERVICES.has_key(arr[2]):
-			obj2 = firewater_globals.SERVICES[arr[2]]
+		if firewater.globals.SERVICES.has_key(arr[2]):
+			obj2 = firewater.globals.SERVICES[arr[2]]
 		
 			# copy the other service object
 			if not obj.proto:
@@ -527,7 +525,7 @@ def parse_service(arr, filename, lineno):
 		
 		else:
 			# treat as system service name
-			obj.port = firewater_service.servbyname(arr[2])
+			obj.port = firewater.service.servbyname(arr[2])
 			if obj.port == None:
 				raise ParseError("%s:%d: no such service '%s'" % (filename, lineno, arr[2]))
 	
@@ -536,8 +534,8 @@ def parse_service(arr, filename, lineno):
 			if len(arr) == 5:
 				# interface-specific service
 				iface = arr[4]
-				if firewater_globals.INTERFACES.has_key(iface):
-					obj.iface = firewater_globals.INTERFACES[iface]
+				if firewater.globals.INTERFACES.has_key(iface):
+					obj.iface = firewater.globals.INTERFACES[iface]
 				else:
 					# treat as real system interface
 					obj.iface = []
@@ -548,7 +546,7 @@ def parse_service(arr, filename, lineno):
 	
 	debug('new service: %s:%s' % (alias, obj))
 	
-	firewater_globals.SERVICES[alias] = obj
+	firewater.globals.SERVICES[alias] = obj
 
 
 def parse_chain(arr, filename, lineno):
@@ -579,18 +577,18 @@ def parse_chain(arr, filename, lineno):
 		debug('set chain %s policy %s' % (chain, policy))
 		
 		# emit default policy setting code
-		bytecode = firewater_bytecode.ByteCode()
+		bytecode = firewater.bytecode.ByteCode()
 		bytecode.set_policy(filename, lineno, chain, policy)
-		firewater_globals.BYTECODE.append(bytecode)
+		firewater.globals.BYTECODE.append(bytecode)
 	
 	else:
 		if len(arr) == 2:
 			# change the current chain
 			debug('set current chain %s' % chain)
 		
-			bytecode = firewater_bytecode.ByteCode()
+			bytecode = firewater.bytecode.ByteCode()
 			bytecode.set_chain(filename, lineno, chain)
-			firewater_globals.BYTECODE.append(bytecode)
+			firewater.globals.BYTECODE.append(bytecode)
 			
 		else:
 			raise ParseError("%s:%d: syntax error" % (filename, lineno))
@@ -610,7 +608,7 @@ def _parse_rule(arr, filename, lineno):
 		raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
 	
 	proto = None
-	if arr[0] in firewater_globals.KNOWN_PROTOCOLS:
+	if arr[0] in firewater.globals.KNOWN_PROTOCOLS:
 		proto = arr.pop(0)
 	
 	if len(arr) <= 1:
@@ -721,22 +719,22 @@ def _parse_rule(arr, filename, lineno):
 		for dest in destinations:
 			if not ifaces:
 				debug('%s:%d: %s %s %s eq %s %s eq %s' % (filename, lineno, allow, proto, src, source_port, dest, dest_port))
-				bytecode = firewater_bytecode.ByteCode()
+				bytecode = firewater.bytecode.ByteCode()
 				bytecode.set_rule(filename, lineno, allow, proto, src, source_port, dest, dest_port, None)
-				firewater_globals.BYTECODE.append(bytecode)
+				firewater.globals.BYTECODE.append(bytecode)
 			else:
 				for iface in ifaces:
 					debug('%s:%d: %s %s %s eq %s %s eq %s on %s' % (filename, lineno, allow, proto, src, source_port, dest, dest_port, iface))
-					bytecode = firewater_bytecode.ByteCode()
+					bytecode = firewater.bytecode.ByteCode()
 					bytecode.set_rule(filename, lineno, allow, proto, src, source_port, dest, dest_port, iface)
-					firewater_globals.BYTECODE.append(bytecode)
+					firewater.globals.BYTECODE.append(bytecode)
 
 
 def _parse_rule_service(filename, lineno, service):
 	'''returns ServiceObject for service'''
 	
 	if not service or service == 'any':
-		return firewater_service.ServiceObject()
+		return firewater.service.ServiceObject()
 	
 	if string.find(string.digits, service[0]) > -1:
 		# numeric service given
@@ -745,18 +743,18 @@ def _parse_rule_service(filename, lineno, service):
 		except ValueError:
 			raise ParseError("%s:%d: syntax error in number '%s'" % (filename, lineno, service))
 		
-		return firewater_service.ServiceObject(service, service_port)
+		return firewater.service.ServiceObject(service, service_port)
 	
-	if firewater_globals.SERVICES.has_key(service):
+	if firewater.globals.SERVICES.has_key(service):
 		# previously defined service
-		return firewater_globals.SERVICES[service]
+		return firewater.globals.SERVICES[service]
 	
 	# system service
-	service_port = firewater_service.servbyname(service)
+	service_port = firewater.service.servbyname(service)
 	if service_port == None:
 		raise ParseError("%s:%d: unknown service '%s'" % (filename, lineno, service))
 	
-	return firewater_service.ServiceObject(service, service_port)
+	return firewater.service.ServiceObject(service, service_port)
 
 
 def _parse_rule_address(filename, lineno, address):
@@ -768,8 +766,8 @@ def _parse_rule_address(filename, lineno, address):
 		address_list.append('0.0.0.0/0')
 		return address_list
 	
-	if firewater_globals.HOSTS.has_key(address):
-		address_list.extend(firewater_globals.HOSTS[address])
+	if firewater.globals.HOSTS.has_key(address):
+		address_list.extend(firewater.globals.HOSTS[address])
 		return address_list
 	
 	# treat as IP address or fqdn
@@ -811,8 +809,8 @@ def _parse_rule_interfaces(filename, lineno, interface):
 	if not interface or interface == 'any':
 		return iface_list
 	
-	if firewater_globals.INTERFACES.has_key(interface):
-		iface_list.extend(firewater_globals.INTERFACES[interface])
+	if firewater.globals.INTERFACES.has_key(interface):
+		iface_list.extend(firewater.globals.INTERFACES[interface])
 		return iface_list
 	
 	iface_list.append(interface)
@@ -837,9 +835,9 @@ def parse_echo(arr, filename, lineno):
 	else:
 		str = string.join(arr[1:])
 	
-	bytecode = firewater_bytecode.ByteCode()
+	bytecode = firewater.bytecode.ByteCode()
 	bytecode.set_echo(filename, lineno, str)
-	firewater_globals.BYTECODE.append(bytecode)
+	firewater.globals.BYTECODE.append(bytecode)
 
 
 def parse_verbatim(arr, filename, lineno):
@@ -851,7 +849,7 @@ def parse_verbatim(arr, filename, lineno):
 	debug('in verbatim')
 	
 	IN_VERBATIM = True
-	firewater_globals.VERBATIM = []
+	firewater.globals.VERBATIM = []
 
 
 def parse_end(arr, filename, lineno):
@@ -868,14 +866,14 @@ def parse_end(arr, filename, lineno):
 		
 		IN_VERBATIM = False
 		
-		bytecode_end_verbatim = firewater_globals.BYTECODE.pop()
+		bytecode_end_verbatim = firewater.globals.BYTECODE.pop()
 		
-		bytecode = firewater_bytecode.ByteCode()
-		bytecode.set_verbatim(filename, lineno, firewater_globals.VERBATIM)
-		firewater_globals.BYTECODE.append(bytecode)
+		bytecode = firewater.bytecode.ByteCode()
+		bytecode.set_verbatim(filename, lineno, firewater.globals.VERBATIM)
+		firewater.globals.BYTECODE.append(bytecode)
 		
-		firewater_globals.BYTECODE.append(bytecode_end_verbatim)
-	
+		firewater.globals.BYTECODE.append(bytecode_end_verbatim)
+		
 	else:
 		raise ParseError("%s:%d: unknown argument '%s' to 'end'" % (filename, lineno, arr[1]))
 

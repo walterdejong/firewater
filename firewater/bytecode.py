@@ -1,6 +1,5 @@
-#! /usr/bin/env python
 #
-#	firewater_bytecode.py	WJ111
+#	firewater/bytecode.py	WJ111
 #
 #   firewater by Walter de Jong <walter@heiho.net> (c) 2011
 #

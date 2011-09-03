@@ -12,14 +12,15 @@
 import sys
 sys.path.append('/usr/lib/firewater')
 
-import firewater_globals
+import firewater
+import firewater.globals
+import firewater.parser
+import firewater.bytecode
 
-from firewater_lib import *
-
-import firewater_parser
-import firewater_bytecode
+from firewater.lib import *
 
 import os
+import sys
 import string
 import getopt
 import errno
@@ -29,34 +30,35 @@ def generate():
 	'''loads plugin module and generates the rules'''
 	
 	# insert default 'chain: incoming' rule
-	rule = firewater_bytecode.ByteCode()
+	rule = firewater.bytecode.ByteCode()
 	rule.set_chain('', 0, 'incoming')
-	firewater_globals.BYTECODE.insert(0, rule)
+	firewater.globals.BYTECODE.insert(0, rule)
 	
 	# load appropriate module
-	module = __import__('firewater_' + firewater_globals.MODULE)
+	module = __import__('firewater.' + firewater.globals.MODULE)
+	module = getattr(module, firewater.globals.MODULE)
 	
 	# generate rules from bytecode
 	module.begin()
 	
-	for bytecode in firewater_globals.BYTECODE:
-		if bytecode.type == firewater_bytecode.ByteCode.TYPE_RULE:
+	for bytecode in firewater.globals.BYTECODE:
+		if bytecode.type == firewater.bytecode.ByteCode.TYPE_RULE:
 			module.generate_rule(bytecode)
 		
-		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_POLICY:
+		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_POLICY:
 			module.generate_policy(bytecode)
 		
-		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_CHAIN:
+		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_CHAIN:
 			module.change_chain(bytecode)
 		
-		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_ECHO:
+		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_ECHO:
 			module.generate_echo(bytecode)
 		
-		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_VERBATIM:
+		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_VERBATIM:
 			module.generate_verbatim(bytecode)
 		
-		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_COMMENT:
-			if firewater_globals.VERBOSE:
+		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_COMMENT:
+			if firewater.globals.VERBOSE:
 				module.generate_comment(bytecode)
 		
 		else:
@@ -75,7 +77,7 @@ def usage():
 	print
 	print 'The syntax of the input lines is described in the documentation'
 	print
-	print 'firewater %s by Walter de Jong <walter@heiho.net> (c) 2011' % firewater_globals.VERSION
+	print 'firewater %s by Walter de Jong <walter@heiho.net> (c) 2011' % firewater.globals.VERSION
 
 
 def get_options():
@@ -106,17 +108,17 @@ def get_options():
 			sys.exit(1)
 		
 		if opt in ('-v', '--verbose'):
-			firewater_globals.VERBOSE = True
+			firewater.globals.VERBOSE = True
 			debug('verbose mode')
 			continue
 		
 		if opt in ('-D', '--debug'):
-			firewater_globals.DEBUG = True
+			firewater.globals.DEBUG = True
 			debug('debug mode')
 			continue
 
 		if opt == '--version':
-			print firewater_globals.VERSION
+			print firewater.globals.VERSION
 			sys.exit(0)
 	
 	# remaining arguments are filenames for input
@@ -130,10 +132,10 @@ def main():
 	errors = 0
 	
 	if not input_files:
-		errors = firewater_parser.read_input_file('/dev/stdin')
+		errors = firewater.parser.read_input_file('/dev/stdin')
 	else:
 		for filename in input_files:
-			errors = firewater_parser.read_input_file(filename)
+			errors = firewater.parser.read_input_file(filename)
 	
 	if errors:
 		sys.exit(1)

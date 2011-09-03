@@ -1,6 +1,5 @@
-#! /usr/bin/env python
 #
-#	firewater_resolv.py	WJ111
+#	firewater/resolv.py	WJ111
 #
 #   firewater by Walter de Jong <walter@heiho.net> (c) 2011
 #
