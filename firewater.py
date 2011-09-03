@@ -75,7 +75,7 @@ def usage():
 	print
 	print 'The syntax of the input lines is described in the documentation'
 	print
-	print 'Written by Walter de Jong <walter@heiho.net> (c) 2011'
+	print 'firewater %s by Walter de Jong <walter@heiho.net> (c) 2011' % firewater_globals.VERSION
 
 
 def get_options():

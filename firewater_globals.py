@@ -9,7 +9,7 @@
 #   License.
 #
 
-VERSION = 0.1
+VERSION = 0.2
 
 DEBUG = False
 VERBOSE = False
