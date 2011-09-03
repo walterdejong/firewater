@@ -9,50 +9,19 @@
 #   License.
 #
 
-from firewater_lib import *
-
-import firewater_bytecode
-
 
 CURRENT_CHAIN = None
 
 
 def begin():
-	debug('firewater_iptables.begin()')
-
 	print '*filter'
 
 
-def generate(bytecode_array):
-	debug('firewater_iptables.generate()')
-	
-	for bytecode in bytecode_array:
-		if bytecode.type == firewater_bytecode.ByteCode.TYPE_RULE:
-			_generate_rule(bytecode)
-		
-		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_POLICY:
-			_generate_policy(bytecode)
-		
-		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_CHAIN:
-			_change_chain(bytecode)
-		
-		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_ECHO:
-			_generate_echo(bytecode)
-		
-		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_VERBATIM:
-			_generate_verbatim(bytecode)
-		
-		else:
-			raise RuntimeError, 'invalid bytecode type %d' % bytecode.type
-
-
 def end():
-	debug('firewater_iptables.end()')
-
 	print 'COMMIT'
 
 
-def _generate_rule(bytecode):
+def generate_rule(bytecode):
 	if not CURRENT_CHAIN:
 		raise RuntimeError, 'CURRENT_CHAIN is not set'
 	
@@ -118,7 +87,7 @@ def _generate_rule(bytecode):
 		bytecode.src, src_port_arg, bytecode.dest, dest_port_arg, target_arg)
 
 
-def _generate_policy(bytecode):
+def generate_policy(bytecode):
 	chain = ''
 	if bytecode.chain == 'incoming':
 		chain = 'INPUT'
@@ -148,19 +117,23 @@ def _generate_policy(bytecode):
 	print ':%s %s' % (chain, policy)
 
 
-def _change_chain(bytecode):
+def change_chain(bytecode):
 	global CURRENT_CHAIN
 	
 	CURRENT_CHAIN = bytecode.chain
 
 
-def _generate_echo(bytecode):
+def generate_echo(bytecode):
 	print bytecode.str
 
 
-def _generate_verbatim(bytecode):
+def generate_verbatim(bytecode):
 	for line in bytecode.text_array:
 		print line
+
+
+def generate_comment(bytecode):
+	print '# %s:%d: %s' % (bytecode.filename, bytecode.lineno, bytecode.comment)
 
 
 # EOB

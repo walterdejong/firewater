@@ -12,6 +12,7 @@
 VERSION = 0.1
 
 DEBUG = False
+VERBOSE = False
 
 # dictionary holding interface aliases and groups
 INTERFACES = { 'all' : [] }

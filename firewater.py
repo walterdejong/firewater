@@ -36,18 +36,42 @@ def generate():
 	# load appropriate module
 	module = __import__('firewater_' + firewater_globals.MODULE)
 	
-	# call module generate()
+	# generate rules from bytecode
 	module.begin()
-	module.generate(firewater_globals.BYTECODE)
+	
+	for bytecode in firewater_globals.BYTECODE:
+		if bytecode.type == firewater_bytecode.ByteCode.TYPE_RULE:
+			module.generate_rule(bytecode)
+		
+		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_POLICY:
+			module.generate_policy(bytecode)
+		
+		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_CHAIN:
+			module.change_chain(bytecode)
+		
+		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_ECHO:
+			module.generate_echo(bytecode)
+		
+		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_VERBATIM:
+			module.generate_verbatim(bytecode)
+		
+		elif bytecode.type == firewater_bytecode.ByteCode.TYPE_COMMENT:
+			if firewater_globals.VERBOSE:
+				module.generate_comment(bytecode)
+		
+		else:
+			raise RuntimeError, 'invalid bytecode type %d' % bytecode.type
+	
 	module.end()
 
 
 def usage():
 	print 'usage: %s [options] <input file> [..]' % os.path.basename(sys.argv[0])
 	print 'options:'
-	print '  -h, --help                     Display this information'
-	print '  -D, --debug                    Enable debug mode'
-	print '      --version                  Print version number and exit'
+	print '  -h, --help                  Display this information'
+	print '  -v, --verbose               Verbose output'
+	print '  -D, --debug                 Enable debug mode'
+	print '      --version               Print version number and exit'
 	print
 	print 'The syntax of the input lines is described in the documentation'
 	print
@@ -60,7 +84,8 @@ def get_options():
 		sys.exit(1)
 	
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], 'h?D', ['help', 'debug', 'version'])
+		opts, args = getopt.getopt(sys.argv[1:], 'h?vD',
+			['help', 'verbose', 'debug', 'version'])
 	except getopt.error, (reason):
 		print '%s: %s' % (os.path.basename(sys.argv[0]), reason)
 #		usage()
@@ -79,6 +104,11 @@ def get_options():
 		if opt in ('-h', '--help', '-?'):
 			usage()
 			sys.exit(1)
+		
+		if opt in ('-v', '--verbose'):
+			firewater_globals.VERBOSE = True
+			debug('verbose mode')
+			continue
 		
 		if opt in ('-D', '--debug'):
 			firewater_globals.DEBUG = True

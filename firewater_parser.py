@@ -11,11 +11,11 @@
 
 #
 #	To make a new keyword for the input file, simply define a
-#	function here like: def parse_xxx(arr, filename, lineno):
+#	function here like: def parse_xxx(arr, filename, lineno, line):
 #	and it will just work (magic trick with getattr(module, functionname))
 #
 
-import  firewater_globals
+import firewater_globals
 
 from firewater_lib import *
 
@@ -105,6 +105,12 @@ def read_input_file(filename):
 		
 		arr = string.split(line)
 		
+		# insert the line into bytecode as comment
+		# (this will be displayed in verbose mode)
+		bytecode = firewater_bytecode.ByteCode()
+		bytecode.set_comment(filename, lineno, line)
+		firewater_globals.BYTECODE.append(bytecode)
+		
 		line = ''	# <-- line is being reset here; use arr[] from here on
 		
 		keyword = string.lower(arr[0])
@@ -129,26 +135,6 @@ def read_input_file(filename):
 	
 	f.close()
 	return errors
-
-
-def _parse_boolean(param, value, filename, lineno):
-	value = string.lower(value)
-	if value in firewater_param.BOOLEAN_VALUE_TRUE:
-		return True
-	
-	elif value in firewater_param.BOOLEAN_VALUE_FALSE:
-		return False
-	
-	raise ParseError('%s:%d: invalid argument for %s' % (filename, lineno, param))
-
-
-def _parse_integer(param, value, filename, lineno, radix = 10):
-	try:
-		n = int(value, radix)
-	except ValueError:
-		raise ParseError('%s:%d: invalid argument for %s' % (filename, lineno, param))
-	
-	return n
 
 
 def _is_ipv4_address(addr):
@@ -882,9 +868,13 @@ def parse_end(arr, filename, lineno):
 		
 		IN_VERBATIM = False
 		
+		bytecode_end_verbatim = firewater_globals.BYTECODE.pop()
+		
 		bytecode = firewater_bytecode.ByteCode()
 		bytecode.set_verbatim(filename, lineno, firewater_globals.VERBATIM)
 		firewater_globals.BYTECODE.append(bytecode)
+		
+		firewater_globals.BYTECODE.append(bytecode_end_verbatim)
 	
 	else:
 		raise ParseError("%s:%d: unknown argument '%s' to 'end'" % (filename, lineno, arr[1]))

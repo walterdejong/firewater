@@ -17,8 +17,9 @@ class ByteCode:
 	TYPE_CHAIN = 3
 	TYPE_ECHO = 4
 	TYPE_VERBATIM = 5
+	TYPE_COMMENT = 6
 	
-	TYPES = ('None', 'rule', 'policy', 'chain', 'echo', 'verbatim')
+	TYPES = ('None', 'rule', 'policy', 'chain', 'echo', 'verbatim', 'comment')
 	
 	def __init__(self):
 		self.type = None
@@ -59,6 +60,12 @@ class ByteCode:
 		self.filename = filename
 		self.lineno = lineno
 		self.text_array = arr[:]
+	
+	def set_comment(self, filename, lineno, comment):
+		self.type = ByteCode.TYPE_COMMENT
+		self.filename = filename
+		self.lineno = lineno
+		self.comment = comment
 
 
 # EOB
