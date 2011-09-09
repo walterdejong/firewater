@@ -76,22 +76,22 @@ def generate():
 			debug('DEFINES == %s' % firewater.globals.DEFINES)
 		
 		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_IFDEF:
+			debug('DEFINES == %s' % firewater.globals.DEFINES)
 			if bytecode.definename in firewater.globals.DEFINES:
-				debug('DEFINES == %s' % firewater.globals.DEFINES)
 				debug('ifdef %s : match' % bytecode.definename)
 			
 			else:
 				debug('ifdef %s : no match, skipping to next endif' % bytecode.definename)
-				skip_to_next_endif()
+				skip_to_next_endif(module)
 		
 		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_IFNDEF:
+			debug('DEFINES == %s' % firewater.globals.DEFINES)
 			if not bytecode.definename in firewater.globals.DEFINES:
-				debug('DEFINES == %s' % firewater.globals.DEFINES)
 				debug('ifndef %s : match (not defined)' % bytecode.definename)
 			
 			else:
 				debug('ifndef %s : no match, skipping to next endif' % bytecode.definename)
-				skip_to_next_endif()
+				skip_to_next_endif(module)
 		
 		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_ENDIF:
 			pass
@@ -102,8 +102,12 @@ def generate():
 	module.end()
 
 
-# helper func for ifdef/ifndef
-def skip_to_next_endif():
+#
+#	helper func for bytecode execution ifdef/ifndef
+#
+def skip_to_next_endif(module):
+	previous_code = None
+	
 	while True:
 		if not len(firewater.globals.BYTECODE):
 			break
@@ -111,9 +115,22 @@ def skip_to_next_endif():
 		bytecode = firewater.globals.BYTECODE.pop(0)
 		if bytecode == None:
 			break
-
+		
+		debug('skipping bytecode: %s' % firewater.bytecode.ByteCode.TYPES[bytecode.type])
+		
 		if bytecode.type == firewater.bytecode.ByteCode.TYPE_ENDIF:
 			break
+		
+		else:
+			previous_code = bytecode
+	
+	# a bit hackish ... the last comment must be about 'endif'
+	# and I want to have it printed in verbose mode
+	if firewater.globals.VERBOSE									\
+		and bytecode != None and previous_code != None				\
+		and bytecode.type == firewater.bytecode.ByteCode.TYPE_ENDIF	\
+		and previous_code.type == firewater.bytecode.ByteCode.TYPE_COMMENT:
+		module.generate_comment(previous_code)
 
 
 def usage():
