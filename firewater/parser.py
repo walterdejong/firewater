@@ -92,7 +92,10 @@ def read_input_file(filename):
 		
 		n = string.find(tmp_line, '#')
 		if n >= 0:
+			stripped_comment = '    ' + tmp_line[n:]
 			tmp_line = tmp_line[:n]		# strip comment
+		else:
+			stripped_comment = ''
 		
 		tmp_line = string.strip(tmp_line)
 		if not tmp_line:
@@ -111,7 +114,7 @@ def read_input_file(filename):
 		# insert the line into bytecode as comment
 		# (this will be displayed in verbose mode)
 		bytecode = firewater.bytecode.ByteCode()
-		bytecode.set_comment(filename, lineno, line)
+		bytecode.set_comment(filename, lineno, line + stripped_comment)
 		firewater.globals.BYTECODE.append(bytecode)
 		
 		line = ''	# <-- line is being reset here; use arr[] from here on
