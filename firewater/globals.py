@@ -39,4 +39,7 @@ BYTECODE = []
 # array of lines of verbatim text
 VERBATIM_TEXT = []
 
+# array of defines
+DEFINES = []
+
 # EOB

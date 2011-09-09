@@ -41,7 +41,16 @@ def generate():
 	# generate rules from bytecode
 	module.begin()
 	
-	for bytecode in firewater.globals.BYTECODE:
+	while True:
+		if not len(firewater.globals.BYTECODE):
+			break
+		
+		bytecode = firewater.globals.BYTECODE.pop(0)
+		if bytecode == None:
+			break
+		
+		debug('bytecode: %s' % firewater.bytecode.ByteCode.TYPES[bytecode.type])
+		
 		if bytecode.type == firewater.bytecode.ByteCode.TYPE_RULE:
 			module.generate_rule(bytecode)
 		
@@ -61,10 +70,47 @@ def generate():
 			if firewater.globals.VERBOSE:
 				module.generate_comment(bytecode)
 		
+		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_DEFINE:
+			debug('defining %s' % bytecode.definename)
+			firewater.globals.DEFINES.append(bytecode.definename)
+		
+		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_IFDEF:
+			if bytecode.definename in firewater.globals.DEFINES:
+				debug('ifdef %s : match' % bytecode.definename)
+
+			else:
+				debug('ifdef %s : no match, skipping to next endif' % bytecode.definename)
+				skip_to_next_endif()
+		
+		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_IFNDEF:
+			if not bytecode.definename in firewater.globals.DEFINES:
+				debug('ifndef %s : match (not defined)' % bytecode.definename)
+			
+			else:
+				debug('ifndef %s : no match, skipping to next endif' % bytecode.definename)
+				skip_to_next_endif()
+		
+		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_ENDIF:
+			pass
+		
 		else:
 			raise RuntimeError, 'invalid bytecode type %d' % bytecode.type
 	
 	module.end()
+
+
+# helper func for ifdef/ifndef
+def skip_to_next_endif():
+	while True:
+		if not len(firewater.globals.BYTECODE):
+			break
+		
+		bytecode = firewater.globals.BYTECODE.pop(0)
+		if bytecode == None:
+			break
+
+		if bytecode.type == firewater.bytecode.ByteCode.TYPE_ENDIF:
+			break
 
 
 def usage():
@@ -139,6 +185,10 @@ def main():
 	
 	if errors:
 		sys.exit(1)
+	
+	# define the name of the current output module as a 'DEFINE'
+	if not firewater.globals.MODULE in firewater.globals.DEFINES:
+		firewater.globals.DEFINES.insert(0, firewater.globals.MODULE)
 	
 	# generate output: the translated rules
 	generate()

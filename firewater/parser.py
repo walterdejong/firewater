@@ -29,6 +29,9 @@ import string
 # status; are we copying verbatim or not?
 IN_VERBATIM = False
 
+# nested ifdefs
+IFDEF_LEVEL = 0
+
 
 class ParseError(Exception):
 	'''error message class for parse errors'''
@@ -50,6 +53,8 @@ class ParseError(Exception):
 def read_input_file(filename):
 	'''read a (included) input file
 	Returns 0 on success, or error count on errors'''
+
+	saved_ifdef_level = IFDEF_LEVEL
 	
 	try:
 		f = open(filename, 'r')
@@ -127,11 +132,20 @@ def read_input_file(filename):
 			parse_error.perror()
 			errors = errors + 1
 	
+	f.close()
+	
 	if IN_VERBATIM:
 		ParseError("%s:%d: missing 'end verbatim' statement" % (filename, lineno)).perror()
 		errors = errors + 1
 	
-	f.close()
+	if IFDEF_LEVEL > saved_ifdef_level:
+		ParseError("%s:%d: missing 'endif' statement" % (filename, lineno)).perror()
+		errors = errors + 1
+	
+	elif IFDEF_LEVEL < saved_ifdef_level:
+		ParseError("%s:%d: too many 'endif' statements" % (filename, lineno)).perror()
+		errors = errors + 1
+	
 	return errors
 
 
@@ -876,6 +890,58 @@ def parse_end(arr, filename, lineno):
 		
 	else:
 		raise ParseError("%s:%d: unknown argument '%s' to 'end'" % (filename, lineno, arr[1]))
+
+
+def parse_define(arr, filename, lineno):
+	if len(arr) != 2:
+		raise ParseError("%s:%d: syntax error, 'define' takes only one argument: a name to define" % (filename, lineno))
+	
+	debug('parser: define %s' % arr[1])
+	
+	bytecode = firewater.bytecode.ByteCode()
+	bytecode.set_define(filename, lineno, arr[1])
+	firewater.globals.BYTECODE.append(bytecode)
+
+
+def parse_ifdef(arr, filename, lineno):
+	global IFDEF_LEVEL
+	
+	if len(arr) != 2:
+		raise ParseError("%s:%d: syntax error, 'ifdef' takes only one argument: a defined name" % (filename, lineno))
+	
+	bytecode = firewater.bytecode.ByteCode()
+	bytecode.set_ifdef(filename, lineno, arr[1])
+	firewater.globals.BYTECODE.append(bytecode)
+	
+	IFDEF_LEVEL = IFDEF_LEVEL + 1
+
+
+def parse_ifndef(arr, filename, lineno):
+	global IFDEF_LEVEL
+	
+	if len(arr) != 2:
+		raise ParseError("%s:%d: syntax error, 'ifndef' takes one argument: a defined name" % (filename, lineno))
+	
+	bytecode = firewater.bytecode.ByteCode()
+	bytecode.set_ifndef(filename, lineno, arr[1])
+	firewater.globals.BYTECODE.append(bytecode)
+	
+	IFDEF_LEVEL = IFDEF_LEVEL + 1
+
+
+def parse_endif(arr, filename, lineno):
+	global IFDEF_LEVEL
+	
+	if len(arr) != 1:
+		raise ParseError("%s:%d: syntax error, 'endif' takes no arguments" % (filename, lineno))
+	
+	bytecode = firewater.bytecode.ByteCode()
+	bytecode.set_endif(filename, lineno)
+	firewater.globals.BYTECODE.append(bytecode)
+	
+	IFDEF_LEVEL = IFDEF_LEVEL - 1
+	if IFDEF_LEVEL < 0:
+		raise ParseError("%s:%d: error, endif reached without matching ifdef" % (filename, lineno))
 
 
 # EOB
