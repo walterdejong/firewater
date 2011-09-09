@@ -121,7 +121,8 @@ def usage():
 	print 'options:'
 	print '  -h, --help                  Display this information'
 	print '  -v, --verbose               Verbose output'
-	print '  -D, --debug                 Enable debug mode'
+	print '  -D, --define=DEFINE         Define a symbol'
+	print '      --debug                 Enable debug mode'
 	print '      --version               Print version number and exit'
 	print
 	print 'The syntax of the input lines is described in the documentation'
@@ -135,8 +136,8 @@ def get_options():
 		sys.exit(1)
 	
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], 'h?vD',
-			['help', 'verbose', 'debug', 'version'])
+		opts, args = getopt.getopt(sys.argv[1:], 'h?vD:',
+			['help', 'verbose', 'define=', 'debug', 'version'])
 	except getopt.error, (reason):
 		print '%s: %s' % (os.path.basename(sys.argv[0]), reason)
 #		usage()
@@ -161,11 +162,16 @@ def get_options():
 			debug('verbose mode')
 			continue
 		
-		if opt in ('-D', '--debug'):
+		if opt in ('-D', '--define'):
+			if not arg in firewater.globals.DEFINES:
+				firewater.globals.DEFINES.append(arg)
+			continue
+		
+		if opt == '--debug':
 			firewater.globals.DEBUG = True
 			debug('debug mode')
 			continue
-
+		
 		if opt == '--version':
 			print firewater.globals.VERSION
 			sys.exit(0)
