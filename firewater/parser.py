@@ -92,7 +92,7 @@ def read_input_file(filename):
 		
 		n = string.find(tmp_line, '#')
 		if n >= 0:
-			stripped_comment = '    ' + tmp_line[n:]
+			stripped_comment = '    ' + string.strip(tmp_line[n:])
 			tmp_line = tmp_line[:n]		# strip comment
 		else:
 			stripped_comment = ''
