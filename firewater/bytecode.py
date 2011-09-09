@@ -72,7 +72,7 @@ class ByteCode:
 		self.comment = comment
 	
 	def set_define(self, filename, lineno, definename):
-		self.type = ByteCode.TYPE_IFDEF
+		self.type = ByteCode.TYPE_DEFINE
 		self.filename = filename
 		self.lineno = lineno
 		self.definename = definename

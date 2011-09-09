@@ -73,17 +73,20 @@ def generate():
 		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_DEFINE:
 			debug('defining %s' % bytecode.definename)
 			firewater.globals.DEFINES.append(bytecode.definename)
+			debug('DEFINES == %s' % firewater.globals.DEFINES)
 		
 		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_IFDEF:
 			if bytecode.definename in firewater.globals.DEFINES:
+				debug('DEFINES == %s' % firewater.globals.DEFINES)
 				debug('ifdef %s : match' % bytecode.definename)
-
+			
 			else:
 				debug('ifdef %s : no match, skipping to next endif' % bytecode.definename)
 				skip_to_next_endif()
 		
 		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_IFNDEF:
 			if not bytecode.definename in firewater.globals.DEFINES:
+				debug('DEFINES == %s' % firewater.globals.DEFINES)
 				debug('ifndef %s : match (not defined)' % bytecode.definename)
 			
 			else:

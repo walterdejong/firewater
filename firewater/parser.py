@@ -896,7 +896,7 @@ def parse_define(arr, filename, lineno):
 	if len(arr) != 2:
 		raise ParseError("%s:%d: syntax error, 'define' takes only one argument: a name to define" % (filename, lineno))
 	
-	debug('parser: define %s' % arr[1])
+	debug('parser: define "%s"' % arr[1])
 	
 	bytecode = firewater.bytecode.ByteCode()
 	bytecode.set_define(filename, lineno, arr[1])
