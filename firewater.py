@@ -71,26 +71,26 @@ def generate():
 				module.generate_comment(bytecode)
 		
 		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_DEFINE:
-			debug('defining %s' % bytecode.definename)
-			firewater.globals.DEFINES.append(bytecode.definename)
+			debug('defining %s' % bytecode.symbol)
+			firewater.globals.DEFINES.append(bytecode.symbol)
 			debug('DEFINES == %s' % firewater.globals.DEFINES)
 		
 		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_IFDEF:
 			debug('DEFINES == %s' % firewater.globals.DEFINES)
-			if bytecode.definename in firewater.globals.DEFINES:
-				debug('ifdef %s : match' % bytecode.definename)
+			if bytecode.symbol in firewater.globals.DEFINES:
+				debug('ifdef %s : match' % bytecode.symbol)
 			
 			else:
-				debug('ifdef %s : no match, skipping to next endif' % bytecode.definename)
+				debug('ifdef %s : no match, skipping to next endif' % bytecode.symbol)
 				skip_to_next_endif(module)
 		
 		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_IFNDEF:
 			debug('DEFINES == %s' % firewater.globals.DEFINES)
-			if not bytecode.definename in firewater.globals.DEFINES:
-				debug('ifndef %s : match (not defined)' % bytecode.definename)
+			if not bytecode.symbol in firewater.globals.DEFINES:
+				debug('ifndef %s : match (not defined)' % bytecode.symbol)
 			
 			else:
-				debug('ifndef %s : no match, skipping to next endif' % bytecode.definename)
+				debug('ifndef %s : no match, skipping to next endif' % bytecode.symbol)
 				skip_to_next_endif(module)
 		
 		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_ENDIF:

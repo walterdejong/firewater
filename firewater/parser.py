@@ -897,7 +897,7 @@ def parse_end(arr, filename, lineno):
 
 def parse_define(arr, filename, lineno):
 	if len(arr) != 2:
-		raise ParseError("%s:%d: syntax error, 'define' takes only one argument: a name to define" % (filename, lineno))
+		raise ParseError("%s:%d: syntax error, 'define' takes only one argument: a symbol to define" % (filename, lineno))
 	
 	debug('parser: define "%s"' % arr[1])
 	
@@ -910,7 +910,7 @@ def parse_ifdef(arr, filename, lineno):
 	global IFDEF_LEVEL
 	
 	if len(arr) != 2:
-		raise ParseError("%s:%d: syntax error, 'ifdef' takes only one argument: a defined name" % (filename, lineno))
+		raise ParseError("%s:%d: syntax error, 'ifdef' takes only one argument: a defined symbol" % (filename, lineno))
 	
 	bytecode = firewater.bytecode.ByteCode()
 	bytecode.set_ifdef(filename, lineno, arr[1])
@@ -923,7 +923,7 @@ def parse_ifndef(arr, filename, lineno):
 	global IFDEF_LEVEL
 	
 	if len(arr) != 2:
-		raise ParseError("%s:%d: syntax error, 'ifndef' takes one argument: a defined name" % (filename, lineno))
+		raise ParseError("%s:%d: syntax error, 'ifndef' takes one argument: a defined symbol" % (filename, lineno))
 	
 	bytecode = firewater.bytecode.ByteCode()
 	bytecode.set_ifndef(filename, lineno, arr[1])

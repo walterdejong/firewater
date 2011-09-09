@@ -71,23 +71,23 @@ class ByteCode:
 		self.lineno = lineno
 		self.comment = comment
 	
-	def set_define(self, filename, lineno, definename):
+	def set_define(self, filename, lineno, symbol):
 		self.type = ByteCode.TYPE_DEFINE
 		self.filename = filename
 		self.lineno = lineno
-		self.definename = definename
+		self.symbol = symbol
 	
-	def set_ifdef(self, filename, lineno, definename):
+	def set_ifdef(self, filename, lineno, symbol):
 		self.type = ByteCode.TYPE_IFDEF
 		self.filename = filename
 		self.lineno = lineno
-		self.definename = definename
+		self.symbol = symbol
 	
-	def set_ifndef(self, filename, lineno, definename):
+	def set_ifndef(self, filename, lineno, symbol):
 		self.type = ByteCode.TYPE_IFNDEF
 		self.filename = filename
 		self.lineno = lineno
-		self.definename = definename
+		self.symbol = symbol
 	
 	def set_endif(self, filename, lineno):
 		self.type = ByteCode.TYPE_ENDIF
