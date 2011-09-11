@@ -96,6 +96,10 @@ def generate():
 		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_ENDIF:
 			pass
 		
+		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_EXIT:
+			debug('exiting with exit code %d' % bytecode.exit_code)
+			sys.exit(bytecode.exit_code)
+		
 		else:
 			raise RuntimeError, 'invalid bytecode type %d' % bytecode.type
 	

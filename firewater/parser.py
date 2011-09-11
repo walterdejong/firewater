@@ -947,4 +947,21 @@ def parse_endif(arr, filename, lineno):
 		raise ParseError("%s:%d: error, endif reached without matching ifdef" % (filename, lineno))
 
 
+def parse_exit(arr, filename, lineno):
+	if len(arr) > 2:
+		raise ParseError("%s:%d: syntax error, too many arguments to 'exit'" % (filename, lineno))
+	
+	exit_code = 0
+	
+	if len(arr) == 2:
+		try:
+			exit_code = int(arr[1])
+		except ValueError:
+			raise ParseError("%s:%d: syntax error, 'exit' may take an integer argument" % (filename, lineno))
+	
+	bytecode = firewater.bytecode.ByteCode()
+	bytecode.set_exit(filename, lineno, exit_code)
+	firewater.globals.BYTECODE.append(bytecode)
+
+
 # EOB
