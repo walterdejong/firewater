@@ -51,7 +51,7 @@ fi
 case "$1" in
 	start)
 		echo "Starting firewater hostbased firewall ..."
-		firewater $RULESET | iptables-restore
+		firewater "$EXTRA_OPTIONS" "$RULESET" | iptables-restore
 		;;
 	
 	stop)

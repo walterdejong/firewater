@@ -8,6 +8,10 @@ RULESET="/etc/firewater.rules"
 
 INCLUDE_DIR="/etc/firewater.d"
 
+#
+# you can use EXTRA_OPTIONS to specify things like -DTEST
+#
+EXTRA_OPTIONS=""
 
 #
 # do some kernel settings (or leave them untouched)
