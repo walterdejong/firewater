@@ -589,7 +589,7 @@ def parse_chain(arr, filename, lineno):
 		
 		policy = arr[4]
 		
-		if not policy in ('allow', 'deny', 'reject', 'accept', 'drop'):
+		if not policy in ('allow', 'deny', 'accept', 'drop'):
 			raise ParseError("%s:%d: syntax error: unknown policy '%s'" % (filename, lineno, policy))
 		
 		# allow for common aliases to be used here

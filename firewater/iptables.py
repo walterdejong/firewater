@@ -107,9 +107,6 @@ def generate_policy(bytecode):
 	elif bytecode.policy == 'deny':
 		policy = 'DROP'
 	
-	elif bytecode.policy == 'reject':
-		policy = 'REJECT'
-	
 	else:
 		raise RuntimeError, 'unknown policy %s' % bytecode.policy
 	
