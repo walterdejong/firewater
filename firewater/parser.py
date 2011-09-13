@@ -145,6 +145,7 @@ def read_input_file(filename):	# throws IOError
 		ParseError("%s:%d: too many 'endif' statements" % (filename, lineno)).perror()
 		errors = errors + 1
 	
+	debug('errors == %d' % errors)
 	return errors
 
 
@@ -182,12 +183,11 @@ def parse_include(arr, filename, lineno):
 	
 	try:
 		# recursively read the given parse file
-		return read_input_file(include_file)
-	except IOError:
-		ParseError("%s:%d: failed to read file '%s'" % (filename, lineno, include_file)).perror()
-		return 1
+		if read_input_file(include_file) > 0:
+			raise ParseError("%s:%d: error in included file %s" % (filename, lineno, include_file))
 	
-	return 1		# not reached
+	except IOError:
+		raise ParseError("%s:%d: failed to read file '%s'" % (filename, lineno, include_file))
 
 
 def parse_iface(arr, filename, lineno):
@@ -589,6 +589,8 @@ def parse_chain(arr, filename, lineno):
 		
 		policy = arr[4]
 		
+		debug('policy == %s' % policy)
+
 		if not policy in ('allow', 'deny', 'accept', 'drop'):
 			raise ParseError("%s:%d: syntax error: unknown policy '%s'" % (filename, lineno, policy))
 		
