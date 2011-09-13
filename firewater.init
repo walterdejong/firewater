@@ -27,12 +27,6 @@ else
 	exit 1
 fi
 
-if [ "$ENABLED" != "yes" ]
-then
-	echo "firewater is disabled"
-	exit 0
-fi
-
 if [ ! -r "$RULESET" ]
 then
 	echo "ERROR: ruleset $RULESET not found, aborting"
@@ -50,6 +44,12 @@ fi
 
 case "$1" in
 	start)
+		if [ "$ENABLED" != "yes" ]
+		then
+			echo "firewater is disabled"
+			exit 0
+		fi
+
 		echo "Starting firewater hostbased firewall ..."
 		firewater $EXTRA_OPTIONS $RULESET | iptables-restore
 		;;
