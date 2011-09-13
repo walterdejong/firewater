@@ -237,5 +237,8 @@ if __name__ == '__main__':
 
 	except KeyboardInterrupt:		# user pressed Ctrl-C
 		pass
+	
+	except RuntimeError, msg:
+		print 'error:', msg
 
 # EOB
