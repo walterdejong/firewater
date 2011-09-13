@@ -50,17 +50,13 @@ class ParseError(Exception):
 		stderr(self.msg)
 
 
-def read_input_file(filename):
+def read_input_file(filename):	# throws IOError
 	'''read a (included) input file
 	Returns 0 on success, or error count on errors'''
 
 	saved_ifdef_level = IFDEF_LEVEL
 	
-	try:
-		f = open(filename, 'r')
-	except IOError, reason:
-		stderr("failed to read input file '%s' : %s" % (filename, reason))
-		return 1
+	f = open(filename, 'r')
 	
 	this_module = sys.modules['firewater.parser']
 	
@@ -177,9 +173,21 @@ def _is_ipv4_address(addr):
 
 # keyword: include
 def parse_include(arr, filename, lineno):
-	debug('include %s' % filename)
-	# recursively read the given parse file
-	return read_input_file(arr[1])
+	if len(arr) <= 1:
+		raise ParseError("%s:%d: 'include' requires a filename argument" % (filename, lineno))
+	
+	include_file = string.join(arr[1:])
+	
+	debug('include %s' % include_file)
+	
+	try:
+		# recursively read the given parse file
+		return read_input_file(include_file)
+	except IOError:
+		ParseError("%s:%d: failed to read file '%s'" % (filename, lineno, include_file)).perror()
+		return 1
+	
+	return 1		# not reached
 
 
 def parse_iface(arr, filename, lineno):
