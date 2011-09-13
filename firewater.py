@@ -10,7 +10,8 @@
 #
 
 import sys
-sys.path.append('/usr/lib/firewater')
+if not '/usr/lib/python' in sys.path:
+	sys.path.append('/usr/lib/python')
 
 import firewater
 import firewater.globals

@@ -9,8 +9,8 @@ For installing the software, in short, do the following (as root):
 
 
 # copy modules to lib dir
-mkdir /usr/lib/firewater
-cp firewater/*.py /usr/lib/firewater/
+mkdir /usr/lib/python/firewater
+cp firewater/*.py /usr/lib/python/firewater/
 
 # put main app in its place
 cp firewater.py /usr/sbin/firewater

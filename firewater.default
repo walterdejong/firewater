@@ -4,14 +4,15 @@
 
 ENABLED="yes"
 
+# ruleset is usually only one file, but may be multiple files in a row
 RULESET="/etc/firewater.rules"
-
-INCLUDE_DIR="/etc/firewater.d"
 
 #
 # you can use EXTRA_OPTIONS to specify things like -DTEST
 #
 EXTRA_OPTIONS=""
+
+INCLUDE_DIR="/etc/firewater.d"
 
 #
 # do some kernel settings (or leave them untouched)

@@ -51,7 +51,7 @@ fi
 case "$1" in
 	start)
 		echo "Starting firewater hostbased firewall ..."
-		firewater "$EXTRA_OPTIONS" "$RULESET" | iptables-restore
+		firewater $EXTRA_OPTIONS $RULESET | iptables-restore
 		;;
 	
 	stop)
@@ -70,8 +70,12 @@ case "$1" in
 		iptables -L -n
 		;;
 
+	test)
+		firewater $EXTRA_OPTIONS -v $RULESET
+		;;
+
 	*)
-		echo "usage: `basename $0` [start|stop|restart|reload|status]"
+		echo "usage: `basename $0` [start|stop|restart|reload|status|test]"
 		exit 1
 		;;
 esac
