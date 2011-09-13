@@ -832,7 +832,12 @@ def _parse_rule_address(filename, lineno, address):
 		address_list.append(address)
 		return address_list
 	
-	raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, address))
+	# treat as fqdn
+	address_list = firewater.resolv.resolv(address)
+	if not address_list:	# error
+		raise ParseError("%s:%d: failed to resolve '%s'" % (filename, lineno, address))
+	
+	return address_list
 
 
 def _parse_rule_interfaces(filename, lineno, interface):
