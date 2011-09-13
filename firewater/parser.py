@@ -718,16 +718,11 @@ def _parse_rule(arr, filename, lineno):
 	debug('  iface   %s' % interface)
 	debug('}')
 	
-	try:
-		sources = _parse_rule_address(filename, lineno, source_addr)
-		source_port = _parse_rule_service(filename, lineno, source_port)
-		destinations = _parse_rule_address(filename, lineno, dest_addr)
-		dest_port = _parse_rule_service(filename, lineno, dest_port)
-		ifaces = _parse_rule_interfaces(filename, lineno, interface)
-	
-	except ParseError, (parse_error):
-		parse_error.perror()
-		return
+	sources = _parse_rule_address(filename, lineno, source_addr)
+	source_port = _parse_rule_service(filename, lineno, source_port)
+	destinations = _parse_rule_address(filename, lineno, dest_addr)
+	dest_port = _parse_rule_service(filename, lineno, dest_port)
+	ifaces = _parse_rule_interfaces(filename, lineno, interface)
 	
 	debug('rule got {')
 	debug('  sources: ' + str(sources))
@@ -736,6 +731,16 @@ def _parse_rule(arr, filename, lineno):
 	debug('  port: ' + str(dest_port))
 	debug('  ifaces: ' + str(ifaces))
 	debug('}')
+	
+	if not proto and (source_port.port > 0 or dest_port.port > 0):
+		if source_port.port > 0 and source_port.proto:
+			proto = source_port.proto
+
+		if dest_port.port > 0 and dest_port.proto:
+			proto = dest_port.proto
+
+		if not proto:
+			raise ParseError("%s:%d: missing protocol" % (filename, lineno))
 	
 	#
 	# save the rule in globals.BYTECODE[]

@@ -56,6 +56,9 @@ def generate_rule(bytecode):
 	
 	src_port_arg = ''
 	if bytecode.src_port.port > 0:
+		if not proto_arg:
+			raise RuntimeError, "source port needs to know a protocol"
+		
 		if bytecode.src_port.endport > 0:
 			src_port_arg = ' --sport %d:%d' % (bytecode.src_port.port, bytecode.src_port.endport)
 		else:
@@ -63,6 +66,9 @@ def generate_rule(bytecode):
 	
 	dest_port_arg = ''
 	if bytecode.dest_port.port > 0:
+		if not proto_arg:
+			raise RuntimeError, "destination port needs to know a protocol"
+		
 		if bytecode.dest_port.endport > 0:
 			dest_port_arg = ' --dport %d:%d' % (bytecode.dest_port.port, bytecode.dest_port.endport)
 		else:
