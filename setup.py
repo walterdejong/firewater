@@ -8,6 +8,8 @@
 #   firewater is distributed under terms described in the GNU General Public
 #   License.
 
+import distutils.sysconfig
+
 from distutils.core import setup
 
 import firewater.globals
@@ -37,11 +39,11 @@ setup(
 	packages = ['firewater'],
 	scripts = ['firewater.py'],
 	data_files = [
-		# init is not a data-file ... but (a plain) setup.py is too simple for what I want
-		('/etc/init.d', [ 'firewater.init' ]),
-
-		('/etc/default', [ 'default/firewater' ]),
-		('/etc/firewater.d', [ 'firewater.d/anti_spoofing.rules' ]),
+#		# init is not a data-file ... but (a plain) setup.py is too simple for what I want
+#		('/etc/init.d', [ 'firewater.init' ]),
+#
+#		('/etc/default', [ 'default/firewater' ]),
+		( '/etc/firewater.d', [ 'firewater.d/anti_spoofing.rules' ]),
 	],
 )
 
