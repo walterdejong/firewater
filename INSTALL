@@ -7,27 +7,18 @@ License.
 
 For installing the software, in short, do the following (as root):
 
-
-# copy modules to lib dir
-mkdir /usr/lib/python/firewater
-cp firewater/*.py /usr/lib/python/firewater/
-
-# put main app in its place
-cp firewater.py /usr/sbin/firewater
-
-# copy support files to /etc/firewater.d/
-mkdir /etc/firewater.d
-cp firewater.d/* /etc/firewater.d/
+./setup.py install
 
 
 If you want to use the provided init-script for Linux, also do
 these steps:
 
-cp firewater.init /etc/init.d/firewater
-cp firewater.default /etc/default/firewater
+cp contrib/firewater.init /etc/init.d/firewater
+cp contrib/firewater.default /etc/default/firewater
 touch /etc/firewater.rules
 
 Use chkconfig or update-rc.d or whatever to activate the init script
 Edit /etc/default/firewater as you wish.
+
 Setup your rules using vi (or editor of choice) in /etc/firewater.rules
 
