@@ -21,4 +21,6 @@ Use chkconfig or update-rc.d or whatever to activate the init script
 Edit /etc/default/firewater as you wish.
 
 Setup your rules using vi (or editor of choice) in /etc/firewater.rules
+Call /etc/init.d/firewater test
+and  /etc/init.d/firewater commit
 

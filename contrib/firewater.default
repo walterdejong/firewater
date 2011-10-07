@@ -7,6 +7,11 @@ ENABLED="yes"
 # ruleset is usually only one file, but may be multiple files in a row
 RULESET="/etc/firewater.rules"
 
+# this file is the compiled ruleset that is loaded into iptables
+# this file persists across reboots
+# use 'firewater commit' to recreate this file
+COMPILED_RULESET="/etc/iptables.saved"
+
 #
 # you can use EXTRA_OPTIONS to specify things like -DTEST
 #

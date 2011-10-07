@@ -33,6 +33,12 @@ then
 	exit 1
 fi
 
+if [ ! -r "$COMPILED_RULESET" ]
+then
+	echo "ERROR: compiled ruleset $COMPILED_RULESET not found, aborting"
+	exit 1
+fi
+
 # change linux kernel settings
 if [ "LINUX_KERNEL_SETTINGS" = "yes" ]
 then
@@ -51,7 +57,7 @@ case "$1" in
 		fi
 
 		echo "Starting firewater hostbased firewall ..."
-		firewater $EXTRA_OPTIONS $RULESET | iptables-restore
+		iptables-restore < $COMPILED_RULESET
 		;;
 	
 	stop)
@@ -72,10 +78,19 @@ case "$1" in
 
 	test)
 		firewater $EXTRA_OPTIONS -v $RULESET
+		echo
+		echo "warning: your changes have not been committed"
+		echo "warning: use '$0 commit' to save the ruleset"
+		echo
+		;;
+	
+	commit)
+		firewater $EXTRA_OPTIONS -v $RULESET >$COMPILED_RULESET
+		$0 start
 		;;
 
 	*)
-		echo "usage: `basename $0` [start|stop|restart|reload|status|test]"
+		echo "usage: `basename $0` [start|stop|restart|reload|status|test|commit]"
 		exit 1
 		;;
 esac
