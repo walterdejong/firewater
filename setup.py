@@ -36,8 +36,10 @@ setup(
 		'Topic :: System :: Networking :: Firewalls'
 	],
 	
+	package_dir={'firewater': 'firewater'},
 	packages = ['firewater'],
-	scripts = ['firewater.py'],
+	
+	scripts = ['scripts/firewater'],
 	data_files = [
 		( '/etc/firewater.d', [ 'firewater.d/anti_spoofing.rules' ]),
 	],
