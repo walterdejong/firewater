@@ -323,9 +323,13 @@ def parse_host(arr, filename, lineno):
 	firewater.globals.HOSTS[alias] = new_host_list
 
 
+def parse_network(arr, filename, lineno):
+	parse_range(arr, filename, lineno)
+
+
 def parse_range(arr, filename, lineno):
 	if len(arr) < 3:
-		raise ParseError("%s:%d: 'range' requires at least 2 arguments: the range alias and the address range" % (filename, lineno))
+		raise ParseError("%s:%d: '%s' requires at least 2 arguments: the range alias and the address range" % (filename, lineno, arr[0]))
 	
 	alias = arr[1]
 	if alias == 'any':
@@ -337,11 +341,11 @@ def parse_range(arr, filename, lineno):
 	ranges_list = string.split(ranges_list, ',')
 	
 	if alias in ranges_list:
-		raise ParseError("%s:%d: range %s references back to itself" % (filename, lineno, alias))
+		raise ParseError("%s:%d: %s %s references back to itself" % (filename, lineno, arr[0], alias))
 	
 	# note that ranges are stored in the same way as hosts
 	if firewater.globals.HOSTS.has_key(alias):
-		raise ParseError("%s:%d: redefinition of range or host %s" % (filename, lineno, alias))
+		raise ParseError("%s:%d: redefinition of %s or host %s" % (filename, lineno, arr[0], alias))
 	
 	# expand the list by filling in any previously defined aliases
 	new_ranges_list = []
@@ -379,7 +383,7 @@ def parse_range(arr, filename, lineno):
 			if not host in new_ranges_list:
 				new_ranges_list.append(host)
 	
-	debug('new range: %s:%s' % (alias, new_ranges_list))
+	debug('new %s: %s:%s' % (arr[0], alias, new_ranges_list))
 	
 	firewater.globals.HOSTS[alias] = new_ranges_list
 
