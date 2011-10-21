@@ -9,13 +9,14 @@
 #
 
 ifndef iptables
-error anti_smurf is currently only implemented for iptables
+  echo anti_smurf is currently only implemented for iptables
+  exit 127
 endif
 
 ifdef iptables
-iptables -A INPUT -p icmp -m icmp --icmp-type address-mask-request -j DROP
-iptables -A INPUT -p icmp -m icmp --icmp-type timestamp-request -j DROP
-iptables -A INPUT -p icmp -m icmp -m limit --limit 1/second -j ACCEPT
+  echo -A INPUT -p icmp -m icmp --icmp-type address-mask-request -j DROP
+  echo -A INPUT -p icmp -m icmp --icmp-type timestamp-request -j DROP
+  echo -A INPUT -p icmp -m icmp -m limit --limit 1/second -j ACCEPT
 endif
 
 # EOB

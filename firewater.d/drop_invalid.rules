@@ -5,16 +5,17 @@
 #
 
 ifndef iptables
-error drop_invalid is currently only implemented for iptables
+  echo drop_invalid is currently only implemented for iptables
+  exit 127
 endif
 
 ifdef iptables
-iptables -A INPUT   -m state --state INVALID -j DROP
-iptables -A FORWARD -m state --state INVALID -j DROP
-iptables -A OUTPUT  -m state --state INVALID -j DROP
+  echo -A INPUT   -m state --state INVALID -j DROP
+  echo -A FORWARD -m state --state INVALID -j DROP
+  echo -A OUTPUT  -m state --state INVALID -j DROP
 
-iptables -A INPUT -p tcp -m tcp --tcp-flags SYN,FIN SYN,FIN -j DROP
-iptables -A INPUT -p tcp -m tcp --tcp-flags SYN,RST SYN,RST -j DROP
+  echo -A INPUT -p tcp -m tcp --tcp-flags SYN,FIN SYN,FIN -j DROP
+  echo -A INPUT -p tcp -m tcp --tcp-flags SYN,RST SYN,RST -j DROP
 endif
 
 # EOB
