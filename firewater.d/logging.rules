@@ -1,6 +1,9 @@
 #
 #	/etc/firewater.d/logging.rules
 #
+#	include this at the very end if you wish to log dropped packets
+#	(assuming you have default policy deny)
+#
 
 ifndef iptables
   echo logging currently only works with iptables
