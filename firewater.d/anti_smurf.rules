@@ -2,6 +2,10 @@
 #	/etc/firewater.d/anti_smurf.rules
 #
 #	do rate limiting on ICMP requests
+#	
+#	Note: technically this is anti-smurfing, but
+#	      in practice you need to stop smurfs at the edge router
+#	      before it reaches your hosts
 #
 
 ifndef iptables
