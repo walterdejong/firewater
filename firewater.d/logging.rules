@@ -1,0 +1,14 @@
+#
+#	/etc/firewater.d/logging.rules
+#
+
+ifndef iptables
+  echo logging currently only works with iptables
+  exit 127
+endif
+
+ifdef iptables
+  echo -A INPUT -m limit --limit 30/min -j LOG --log-prefix "iptables dropping: "
+endif
+
+# EOB
