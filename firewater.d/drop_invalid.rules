@@ -1,0 +1,21 @@
+#
+#	/etc/firewater.d/drop_invalid
+#
+#	- drop all invalid packets
+#
+
+ifndef iptables
+error drop_invalid is currently only implemented for iptables
+endif
+
+ifdef iptables
+iptables -A INPUT   -m state --state INVALID -j DROP
+iptables -A FORWARD -m state --state INVALID -j DROP
+iptables -A OUTPUT  -m state --state INVALID -j DROP
+
+iptables -A INPUT -p tcp -m tcp --tcp-flags SYN,FIN SYN,FIN -j DROP
+iptables -A INPUT -p tcp -m tcp --tcp-flags SYN,RST SYN,RST -j DROP
+endif
+
+# EOB
+
