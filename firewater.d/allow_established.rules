@@ -1,0 +1,20 @@
+#
+#	/etc/firewater.d/allow_established.rules
+#
+#	allow established traffic
+#	Note: It's better to do outgoing filtering, but this is a popular rule
+#	      nevertheless ...
+#
+
+ifndef iptables
+  echo allow_established is currently only implemented for iptables
+  exit 127
+endif
+
+ifdef iptables
+  # allow established on any interface
+  echo -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+endif
+
+# EOB
+
