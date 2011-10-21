@@ -1,0 +1,18 @@
+#
+#	/etc/firewater.d/anti_smurf.rules
+#
+#	do rate limiting on ICMP requests
+#
+
+ifndef iptables
+error anti_smurf is currently only implemented for iptables
+endif
+
+ifdef iptables
+iptables -A INPUT -p icmp -m icmp --icmp-type address-mask-request -j DROP
+iptables -A INPUT -p icmp -m icmp --icmp-type timestamp-request -j DROP
+iptables -A INPUT -p icmp -m icmp -m limit --limit 1/second -j ACCEPT
+endif
+
+# EOB
+
