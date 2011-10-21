@@ -1,0 +1,16 @@
+#
+#	/etc/firewater.d/reject_all.rules
+#
+#	include this file at the very end if you want to send rejects
+#
+
+ifndef iptables
+  echo reject_all currently only works with iptables
+  exit 127
+endif
+
+ifdef iptables
+  echo -A INPUT -j REJECT
+endif
+
+# EOB
