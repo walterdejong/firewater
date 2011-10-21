@@ -1,0 +1,19 @@
+#
+#	/etc/firewater.d/allow_loopback.rules
+#
+#	iptables rules for accepting anything on loopback interface
+#
+
+ifndef iptables
+  echo allow_loopback is currently only implemented for iptables
+  exit 127
+endif
+
+ifdef iptables
+  # allow on loopback
+  echo -A INPUT -i lo -j ACCEPT
+  echo -A OUTPUT -o lo -s 127.0.0.0/8 -j ACCEPT
+endif
+
+# EOB
+
