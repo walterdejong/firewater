@@ -72,11 +72,6 @@ def generate():
 			if firewater.globals.VERBOSE:
 				module.generate_comment(bytecode)
 		
-		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_DEFINE:
-			debug('defining %s' % bytecode.symbol)
-			firewater.globals.DEFINES.append(bytecode.symbol)
-			debug('DEFINES == %s' % firewater.globals.DEFINES)
-		
 		elif bytecode.type == firewater.bytecode.ByteCode.TYPE_IFDEF:
 			debug('DEFINES == %s' % firewater.globals.DEFINES)
 			if bytecode.symbol in firewater.globals.DEFINES:

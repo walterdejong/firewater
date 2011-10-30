@@ -8,7 +8,7 @@
 #   License.
 #
 
-VERSION = '0.5'
+VERSION = '0.6'
 
 DEBUG = False
 VERBOSE = False
