@@ -17,13 +17,10 @@ class ByteCode:
 	TYPE_ECHO = 4
 	TYPE_VERBATIM = 5
 	TYPE_COMMENT = 6
-	TYPE_IFDEF = 7
-	TYPE_IFNDEF = 8
-	TYPE_ENDIF = 9
-	TYPE_EXIT = 10
+	TYPE_EXIT = 7
 	
 	TYPES = ('None', 'rule', 'policy', 'chain', 'echo', 'verbatim', 'comment',
-		'ifdef', 'ifndef', 'endif', 'exit')
+		'exit')
 	
 	def __init__(self):
 		self.type = None
@@ -71,23 +68,6 @@ class ByteCode:
 		self.lineno = lineno
 		self.comment = comment
 	
-	def set_ifdef(self, filename, lineno, symbol):
-		self.type = ByteCode.TYPE_IFDEF
-		self.filename = filename
-		self.lineno = lineno
-		self.symbol = symbol
-	
-	def set_ifndef(self, filename, lineno, symbol):
-		self.type = ByteCode.TYPE_IFNDEF
-		self.filename = filename
-		self.lineno = lineno
-		self.symbol = symbol
-	
-	def set_endif(self, filename, lineno):
-		self.type = ByteCode.TYPE_ENDIF
-		self.filename = filename
-		self.lineno = lineno
-
 	def set_exit(self, filename, lineno, exit_code):
 		self.type = ByteCode.TYPE_EXIT
 		self.filename = filename

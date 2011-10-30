@@ -30,7 +30,8 @@ import string
 IN_VERBATIM = False
 
 # nested ifdefs
-IFDEF_LEVEL = 0
+# the IFDEF_STACK[0] tells whether statements may be executed or not
+IFDEF_STACK = [ True ]
 
 
 class ParseError(Exception):
@@ -53,8 +54,6 @@ class ParseError(Exception):
 def read_input_file(filename):	# throws IOError
 	'''read a (included) input file
 	Returns 0 on success, or error count on errors'''
-
-	saved_ifdef_level = IFDEF_LEVEL
 	
 	f = open(filename, 'r')
 	
@@ -111,11 +110,16 @@ def read_input_file(filename):	# throws IOError
 		# (this will be displayed in verbose mode)
 		bytecode = firewater.bytecode.ByteCode()
 		bytecode.set_comment(filename, lineno, line + stripped_comment)
-		firewater.globals.BYTECODE.append(bytecode)
 		
 		line = ''	# <-- line is being reset here; use arr[] from here on
 		
 		keyword = string.lower(arr[0])
+		
+		if not IFDEF_STACK[0]:
+			if not keyword in ('else', 'endif'):
+				continue
+		
+		firewater.globals.BYTECODE.append(bytecode)
 		
 		# get the parser function
 		try:
@@ -137,12 +141,8 @@ def read_input_file(filename):	# throws IOError
 		ParseError("%s:%d: missing 'end verbatim' statement" % (filename, lineno)).perror()
 		errors = errors + 1
 	
-	if IFDEF_LEVEL > saved_ifdef_level:
+	if len(IFDEF_STACK) > 1:
 		ParseError("%s:%d: missing 'endif' statement" % (filename, lineno)).perror()
-		errors = errors + 1
-	
-	elif IFDEF_LEVEL < saved_ifdef_level:
-		ParseError("%s:%d: too many 'endif' statements" % (filename, lineno)).perror()
 		errors = errors + 1
 	
 	debug('errors == %d' % errors)
@@ -928,44 +928,62 @@ def parse_define(arr, filename, lineno):
 
 
 def parse_ifdef(arr, filename, lineno):
-	global IFDEF_LEVEL
+	global IFDEF_STACK
 	
 	if len(arr) != 2:
 		raise ParseError("%s:%d: syntax error, 'ifdef' takes only one argument: a defined symbol" % (filename, lineno))
 	
-	bytecode = firewater.bytecode.ByteCode()
-	bytecode.set_ifdef(filename, lineno, arr[1])
-	firewater.globals.BYTECODE.append(bytecode)
-	
-	IFDEF_LEVEL = IFDEF_LEVEL + 1
+	if arr[1] in firewater.globals.DEFINES:
+		debug('IFDEF_STACK : True')
+		IFDEF_STACK.insert(0, True)
+	else:
+		debug('IFDEF_STACK : False')
+		IFDEF_STACK.insert(0, False)
 
 
 def parse_ifndef(arr, filename, lineno):
-	global IFDEF_LEVEL
+	global IFDEF_STACK
 	
 	if len(arr) != 2:
 		raise ParseError("%s:%d: syntax error, 'ifndef' takes one argument: a defined symbol" % (filename, lineno))
 	
-	bytecode = firewater.bytecode.ByteCode()
-	bytecode.set_ifndef(filename, lineno, arr[1])
-	firewater.globals.BYTECODE.append(bytecode)
+	if not arr[1] in firewater.globals.DEFINES:
+		debug('IFDEF_STACK : True')
+		IFDEF_STACK.insert(0, True)
+	else:
+		debug('IFDEF_STACK : False')
+		IFDEF_STACK.insert(0, False)
+
+
+def parse_else(arr, filename, lineno):
+	global IFDEF_STACK
 	
-	IFDEF_LEVEL = IFDEF_LEVEL + 1
+	if len(arr) != 1:
+		raise ParseError("%s:%d: syntax error, 'else' takes no arguments" % (filename, lineno))
+	
+	#
+	# 'else' may only be followed by 'ifdef' and 'ifndef', but note that
+	# the way this coded, it can also be followed by 'else' !!
+	# (well ... maybe I will fix that issue later)
+	#
+	if len(IFDEF_STACK) <= 1:
+		raise ParseError("%s:%d: syntax error, 'else' may only be followed by 'ifdef' or 'ifndef'" % (filename, lineno))
+	
+	IFDEF_STACK[0] = not IFDEF_STACK[0]
+	debug('IFDEF_STACK : %s' % IFDEF_STACK[0])
 
 
 def parse_endif(arr, filename, lineno):
-	global IFDEF_LEVEL
+	global IFDEF_STACK
 	
 	if len(arr) != 1:
 		raise ParseError("%s:%d: syntax error, 'endif' takes no arguments" % (filename, lineno))
 	
-	bytecode = firewater.bytecode.ByteCode()
-	bytecode.set_endif(filename, lineno)
-	firewater.globals.BYTECODE.append(bytecode)
-	
-	IFDEF_LEVEL = IFDEF_LEVEL - 1
-	if IFDEF_LEVEL < 0:
-		raise ParseError("%s:%d: error, endif reached without matching ifdef" % (filename, lineno))
+	if len(IFDEF_STACK) > 1:
+		IFDEF_STACK.pop(0)
+		debug('IFDEF_STACK : %s' % IFDEF_STACK[0])
+	else:
+		raise ParseError("%s:%d: error, 'endif' reached without matching 'ifdef'" % (filename, lineno))
 
 
 def parse_exit(arr, filename, lineno):
