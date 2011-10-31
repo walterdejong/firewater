@@ -28,9 +28,6 @@ import string
 
 THIS_MODULE = sys.modules['firewater.parser']
 
-# status; are we copying verbatim or not?
-IN_VERBATIM = False
-
 
 class Parser:
 	'''class that parses an input file'''
@@ -113,8 +110,6 @@ class Parser:
 				# note that this shadows the 'end' keyword, but only when in verbatim mode
 				if not (len(arr) == 2 and arr[0] == 'end' and arr[1] == 'verbatim'):
 					debug('verbatim line == [%s]' % verbatim_line)
-					# TODO remove this global
-					firewater.globals.VERBATIM.append(verbatim_line)
 					self.verbatim_text.append(verbatim_line)
 					continue
 			
@@ -954,35 +949,31 @@ def parse_echo(p, arr, filename, lineno):
 
 
 def parse_verbatim(p, arr, filename, lineno):
-	global IN_VERBATIM
-	
 	if len(arr) > 1:
 		raise ParseError("%s:%d: syntax error, 'verbatim' does not take any arguments" % (filename, lineno))
 	
 	debug('in verbatim')
 	
-	IN_VERBATIM = True
-	firewater.globals.VERBATIM = []
+	p.in_verbatim = True
+	p.verbatim_text = []
 
 
 def parse_end(p, arr, filename, lineno):
-	global IN_VERBATIM
-	
 	if len(arr) > 2:
 		raise ParseError("%s:%d: syntax error, 'end' takes only one argument" % (filename, lineno))
 	
 	if arr[1] == 'verbatim':
-		if not IN_VERBATIM:
+		if not p.in_verbatim:
 			raise ParseError("%s:%d: 'end' can not be used here" % (filename, lineno))
 		
 		debug('end verbatim')
 		
-		IN_VERBATIM = False
+		p.in_verbatim = False
 		
 		bytecode_end_verbatim = firewater.globals.BYTECODE.pop()
 		
 		bytecode = firewater.bytecode.ByteCode()
-		bytecode.set_verbatim(filename, lineno, firewater.globals.VERBATIM)
+		bytecode.set_verbatim(filename, lineno, p.verbatim_text)
 		firewater.globals.BYTECODE.append(bytecode)
 		
 		firewater.globals.BYTECODE.append(bytecode_end_verbatim)
