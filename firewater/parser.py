@@ -157,6 +157,7 @@ class Parser:
 		
 		if not self.keyword:
 			raise ParseError('%s: no keyword set; invalid parser state' % self)
+			self.errors = self.errors + 1
 			return 1
 		
 		if not self.ifdef_stack[0]:
@@ -169,12 +170,14 @@ class Parser:
 			func = getattr(self, 'parse_%s' % self.keyword)
 		except AttributeError:
 			stderr("%s: unknown keyword '%s'" % (self, self.keyword))
+			self.errors = self.errors + 1
 			return 1
 		
 		try:
 			func()
 		except ParseError, (parse_error):
 			parse_error.perror()
+			self.errors = self.errors + 1
 			return 1
 		
 		return 0
