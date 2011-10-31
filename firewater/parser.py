@@ -10,7 +10,7 @@
 
 #
 #	To make a new keyword for the input file, simply define a
-#	function here like: def parse_xxx(arr, filename, lineno, line):
+#	function here like: def parse_xxx(p, arr, filename, lineno, line):
 #	and it will just work (magic trick with getattr(module, functionname))
 #
 
@@ -163,7 +163,7 @@ class Parser:
 			return 1
 		
 		try:
-			func(self.arr, self.filename, self.lineno)
+			func(self, self.arr, self.filename, self.lineno)
 		except ParseError, (parse_error):
 			parse_error.perror()
 			return 1
@@ -233,7 +233,7 @@ def _is_ipv4_address(addr):
 
 
 # keyword: include
-def parse_include(arr, filename, lineno):
+def parse_include(p, arr, filename, lineno):
 	if len(arr) <= 1:
 		raise ParseError("%s:%d: 'include' requires a filename argument" % (filename, lineno))
 	
@@ -250,11 +250,11 @@ def parse_include(arr, filename, lineno):
 		raise ParseError("%s:%d: failed to read file '%s'" % (filename, lineno, include_file))
 
 
-def parse_iface(arr, filename, lineno):
-	parse_interface(arr, filename, lineno)
+def parse_iface(p, arr, filename, lineno):
+	parse_interface(p, arr, filename, lineno)
 
 
-def parse_interface(arr, filename, lineno):
+def parse_interface(p, arr, filename, lineno):
 	if len(arr) < 3:
 		raise ParseError("%s:%d: '%s' requires at least 2 arguments: the interface alias and the real interface name" % (filename, lineno, arr[0]))
 	
@@ -292,7 +292,7 @@ def parse_interface(arr, filename, lineno):
 			all_ifaces.append(iface)
 
 
-def parse_debug(arr, filename, lineno):
+def parse_debug(p, arr, filename, lineno):
 	if len(arr) < 2:
 		raise ParseError("%s:%d: usage: debug interfaces|hosts|services" % (filename, lineno))
 	
@@ -314,7 +314,7 @@ def parse_debug(arr, filename, lineno):
 	raise ParseError("%s:%d: don't know how to debug '%s'" % (filename, lineno, arr[1]))
 
 
-def parse_host(arr, filename, lineno):
+def parse_host(p, arr, filename, lineno):
 	if len(arr) < 3:
 		raise ParseError("%s:%d: 'host' requires at least 2 arguments: the host alias and the IP address or fqdn" % (filename, lineno))
 	
@@ -383,11 +383,11 @@ def parse_host(arr, filename, lineno):
 	firewater.globals.HOSTS[alias] = new_host_list
 
 
-def parse_network(arr, filename, lineno):
-	parse_range(arr, filename, lineno)
+def parse_network(p, arr, filename, lineno):
+	parse_range(p, arr, filename, lineno)
 
 
-def parse_range(arr, filename, lineno):
+def parse_range(p, arr, filename, lineno):
 	if len(arr) < 3:
 		raise ParseError("%s:%d: '%s' requires at least 2 arguments: the range alias and the address range" % (filename, lineno, arr[0]))
 	
@@ -448,7 +448,7 @@ def parse_range(arr, filename, lineno):
 	firewater.globals.HOSTS[alias] = new_ranges_list
 
 
-def parse_group(arr, filename, lineno):
+def parse_group(p, arr, filename, lineno):
 	if len(arr) < 3:
 		raise ParseError("%s:%d: 'group' requires at least 2 arguments: the group alias and at least 1 member" % (filename, lineno))
 	
@@ -517,11 +517,11 @@ def parse_group(arr, filename, lineno):
 	firewater.globals.HOSTS[alias] = new_group_list
 
 
-def parse_serv(arr, filename, lineno):
-	return parse_service(arr, filename, lineno)
+def parse_serv(p, arr, filename, lineno):
+	return parse_service(p, arr, filename, lineno)
 
 
-def parse_service(arr, filename, lineno):
+def parse_service(p, arr, filename, lineno):
 	if len(arr) < 3:
 		raise ParseError("%s:%d: '%s' requires at least 2 arguments: the service alias and at least 1 property" % (filename, lineno, arr[0]))
 	
@@ -638,7 +638,7 @@ def parse_service(arr, filename, lineno):
 	firewater.globals.SERVICES[alias] = obj
 
 
-def parse_chain(arr, filename, lineno):
+def parse_chain(p, arr, filename, lineno):
 	if len(arr) < 2:
 		raise ParseError("%s:%d: syntax error" % (filename, lineno))
 	
@@ -685,7 +685,7 @@ def parse_chain(arr, filename, lineno):
 			raise ParseError("%s:%d: syntax error" % (filename, lineno))
 
 
-def _parse_rule(arr, filename, lineno):
+def _parse_rule(p, arr, filename, lineno):
 	'''parse a rule
 	
 	rule syntax:
@@ -782,11 +782,11 @@ def _parse_rule(arr, filename, lineno):
 	debug('  iface   %s' % interface)
 	debug('}')
 	
-	sources = _parse_rule_address(filename, lineno, source_addr)
-	source_port = _parse_rule_service(filename, lineno, source_port)
-	destinations = _parse_rule_address(filename, lineno, dest_addr)
-	dest_port = _parse_rule_service(filename, lineno, dest_port)
-	ifaces = _parse_rule_interfaces(filename, lineno, interface)
+	sources = _parse_rule_address(p, filename, lineno, source_addr)
+	source_port = _parse_rule_service(p, filename, lineno, source_port)
+	destinations = _parse_rule_address(p, filename, lineno, dest_addr)
+	dest_port = _parse_rule_service(p, filename, lineno, dest_port)
+	ifaces = _parse_rule_interfaces(p, filename, lineno, interface)
 	
 	debug('rule got {')
 	debug('  sources: ' + str(sources))
@@ -826,7 +826,7 @@ def _parse_rule(arr, filename, lineno):
 					firewater.globals.BYTECODE.append(bytecode)
 
 
-def _parse_rule_service(filename, lineno, service):
+def _parse_rule_service(p, filename, lineno, service):
 	'''returns ServiceObject for service'''
 	
 	if not service or service == 'any':
@@ -853,7 +853,7 @@ def _parse_rule_service(filename, lineno, service):
 	return firewater.service.ServiceObject(service, service_port)
 
 
-def _parse_rule_address(filename, lineno, address):
+def _parse_rule_address(p, filename, lineno, address):
 	'''returns list of addresses'''
 	
 	address_list = []
@@ -904,7 +904,7 @@ def _parse_rule_address(filename, lineno, address):
 	return address_list
 
 
-def _parse_rule_interfaces(filename, lineno, interface):
+def _parse_rule_interfaces(p, filename, lineno, interface):
 	iface_list = []
 	
 	if not interface or interface == 'any':
@@ -918,19 +918,19 @@ def _parse_rule_interfaces(filename, lineno, interface):
 	return iface_list
 
 
-def parse_allow(arr, filename, lineno):
-	_parse_rule(arr, filename, lineno)
+def parse_allow(p, arr, filename, lineno):
+	_parse_rule(p, arr, filename, lineno)
 
 
-def parse_deny(arr, filename, lineno):
-	_parse_rule(arr, filename, lineno)
+def parse_deny(p, arr, filename, lineno):
+	_parse_rule(p, arr, filename, lineno)
 
 
-def parse_reject(arr, filename, lineno):
-	_parse_rule(arr, filename, lineno)
+def parse_reject(p, arr, filename, lineno):
+	_parse_rule(p, arr, filename, lineno)
 
 
-def parse_echo(arr, filename, lineno):
+def parse_echo(p, arr, filename, lineno):
 	if len(arr) <= 1:
 		str = ''
 	else:
@@ -941,7 +941,7 @@ def parse_echo(arr, filename, lineno):
 	firewater.globals.BYTECODE.append(bytecode)
 
 
-def parse_verbatim(arr, filename, lineno):
+def parse_verbatim(p, arr, filename, lineno):
 	global IN_VERBATIM
 	
 	if len(arr) > 1:
@@ -953,7 +953,7 @@ def parse_verbatim(arr, filename, lineno):
 	firewater.globals.VERBATIM = []
 
 
-def parse_end(arr, filename, lineno):
+def parse_end(p, arr, filename, lineno):
 	global IN_VERBATIM
 	
 	if len(arr) > 2:
@@ -979,7 +979,7 @@ def parse_end(arr, filename, lineno):
 		raise ParseError("%s:%d: unknown argument '%s' to 'end'" % (filename, lineno, arr[1]))
 
 
-def parse_define(arr, filename, lineno):
+def parse_define(p, arr, filename, lineno):
 	if len(arr) != 2:
 		raise ParseError("%s:%d: syntax error, 'define' takes only one argument: a symbol to define" % (filename, lineno))
 	
@@ -987,7 +987,7 @@ def parse_define(arr, filename, lineno):
 	firewater.globals.DEFINES.append(arr[1])
 
 
-def parse_ifdef(arr, filename, lineno):
+def parse_ifdef(p, arr, filename, lineno):
 	global IFDEF_STACK
 	
 	if len(arr) != 2:
@@ -1001,7 +1001,7 @@ def parse_ifdef(arr, filename, lineno):
 		IFDEF_STACK.insert(0, False)
 
 
-def parse_ifndef(arr, filename, lineno):
+def parse_ifndef(p, arr, filename, lineno):
 	global IFDEF_STACK
 	
 	if len(arr) != 2:
@@ -1015,7 +1015,7 @@ def parse_ifndef(arr, filename, lineno):
 		IFDEF_STACK.insert(0, False)
 
 
-def parse_else(arr, filename, lineno):
+def parse_else(p, arr, filename, lineno):
 	global IFDEF_STACK
 	
 	if len(arr) != 1:
@@ -1033,7 +1033,7 @@ def parse_else(arr, filename, lineno):
 	debug('IFDEF_STACK : %s' % IFDEF_STACK[0])
 
 
-def parse_endif(arr, filename, lineno):
+def parse_endif(p, arr, filename, lineno):
 	global IFDEF_STACK
 	
 	if len(arr) != 1:
@@ -1046,7 +1046,7 @@ def parse_endif(arr, filename, lineno):
 		raise ParseError("%s:%d: error, 'endif' reached without matching 'ifdef'" % (filename, lineno))
 
 
-def parse_exit(arr, filename, lineno):
+def parse_exit(p, arr, filename, lineno):
 	if len(arr) > 2:
 		raise ParseError("%s:%d: syntax error, too many arguments to 'exit'" % (filename, lineno))
 	
