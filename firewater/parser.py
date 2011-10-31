@@ -31,10 +31,6 @@ THIS_MODULE = sys.modules['firewater.parser']
 # status; are we copying verbatim or not?
 IN_VERBATIM = False
 
-# nested ifdefs
-# the IFDEF_STACK[0] tells whether statements may be executed or not
-IFDEF_STACK = [ True ]
-
 
 class Parser:
 	'''class that parses an input file'''
@@ -51,6 +47,8 @@ class Parser:
 		self.errors = 0
 		self.in_verbatim = False
 		self.verbatim_text = None
+		self.ifdef_stack = None
+		self.else_stack = None
 	
 	def __repr__(self):
 		return '%s:%d' % (self.filename, self.lineno)
@@ -58,8 +56,14 @@ class Parser:
 	def open(self, filename):
 		self.filename = filename
 		self.file = open(self.filename, 'r')
-		self.lineno = 1
+		self.lineno = 0
 		self.verbatim_text = []
+		
+		# is the ifdef true? may we execute statements?
+		self.ifdef_stack = [ True ]
+		
+		# can we have an 'else' statement now?
+		self.else_stack = [ False ]
 	
 	def close(self):
 		self.file.close()
@@ -76,6 +80,8 @@ class Parser:
 		self.keyword = None
 		self.in_verbatim = False
 		self.verbatim_text = None
+		self.ifdef_stack = None
+		self.else_stack = None
 	
 	def getline(self):
 		'''read statement from input file'''
@@ -144,16 +150,10 @@ class Parser:
 			raise ParseError('%s: no keyword set; invalid parser state' % self)
 			return 1
 		
-		# insert the line into bytecode as comment
-		# (this will be displayed in verbose mode)
-		bytecode = firewater.bytecode.ByteCode()
-		bytecode.set_comment(self.filename, self.lineno, self.full_line)
-		
-		if not IFDEF_STACK[0]:
-			if not self.keyword in ('else', 'endif'):
+		if not self.ifdef_stack[0]:
+			if not self.keyword in ('ifdef', 'ifndef', 'else', 'endif'):
+				debug("%s: skipping %s" % (self, self.keyword))
 				return 0
-		
-		firewater.globals.BYTECODE.append(bytecode)
 		
 		# get the parser function
 		try:
@@ -169,6 +169,15 @@ class Parser:
 			return 1
 		
 		return 0
+	
+	def insert_comment_line(self):
+		'''insert the current line into bytecode as comment'''
+		'''(this will be displayed in verbose mode)'''
+		
+		if self.ifdef_stack[0] or self.keyword in ('ifdef', 'ifndef', 'else', 'endif'):
+			bytecode = firewater.bytecode.ByteCode()
+			bytecode.set_comment(self.filename, self.lineno, self.full_line)
+			firewater.globals.BYTECODE.append(bytecode)
 
 
 class ParseError(Exception):
@@ -192,18 +201,21 @@ def read_input_file(filename):	# throws IOError
 	'''read a (included) input file
 	Returns 0 on success, or error count on errors'''
 	
+	errors = 0
+	
 	parser = Parser()
 	parser.open(filename)
 	
 	while parser.getline():
+		parser.insert_comment_line()
 		parser.interpret()
 	
-	parser.close()
-	errors = parser.errors
-	
-	if len(IFDEF_STACK) > 1:
+	if len(parser.ifdef_stack) > 1:
 		ParseError("%s:%d: missing 'endif' statement" % (filename, lineno)).perror()
 		errors = errors + 1
+			
+	parser.close()
+	errors = errors + parser.errors
 	
 	debug('errors == %d' % errors)
 	return errors
@@ -988,62 +1000,54 @@ def parse_define(p, arr, filename, lineno):
 
 
 def parse_ifdef(p, arr, filename, lineno):
-	global IFDEF_STACK
-	
 	if len(arr) != 2:
 		raise ParseError("%s:%d: syntax error, 'ifdef' takes only one argument: a defined symbol" % (filename, lineno))
 	
-	if arr[1] in firewater.globals.DEFINES:
-		debug('IFDEF_STACK : True')
-		IFDEF_STACK.insert(0, True)
+	if p.ifdef_stack[0]:
+		p.ifdef_stack.insert(0, arr[1] in firewater.globals.DEFINES)
 	else:
-		debug('IFDEF_STACK : False')
-		IFDEF_STACK.insert(0, False)
+		p.ifdef_stack.insert(0, False)
+	
+	p.else_stack.insert(0, True)
 
 
 def parse_ifndef(p, arr, filename, lineno):
-	global IFDEF_STACK
-	
 	if len(arr) != 2:
-		raise ParseError("%s:%d: syntax error, 'ifndef' takes one argument: a defined symbol" % (filename, lineno))
+		raise ParseError("%s:%d: syntax error, 'ifdef' takes only one argument: a defined symbol" % (filename, lineno))
 	
-	if not arr[1] in firewater.globals.DEFINES:
-		debug('IFDEF_STACK : True')
-		IFDEF_STACK.insert(0, True)
+	if p.ifdef_stack[0]:
+		p.ifdef_stack.insert(0, not arr[1] in firewater.globals.DEFINES)
 	else:
-		debug('IFDEF_STACK : False')
-		IFDEF_STACK.insert(0, False)
+		p.ifdef_stack.insert(0, False)
+	
+	p.else_stack.insert(0, True)
 
 
 def parse_else(p, arr, filename, lineno):
-	global IFDEF_STACK
-	
-	if len(arr) != 1:
+	if len(arr) > 1:
 		raise ParseError("%s:%d: syntax error, 'else' takes no arguments" % (filename, lineno))
 	
-	#
-	# 'else' may only be followed by 'ifdef' and 'ifndef', but note that
-	# the way this coded, it can also be followed by 'else' !!
-	# (well ... maybe I will fix that issue later)
-	#
-	if len(IFDEF_STACK) <= 1:
-		raise ParseError("%s:%d: syntax error, 'else' may only be followed by 'ifdef' or 'ifndef'" % (filename, lineno))
+	if len(p.ifdef_stack) <= 1 or not p.else_stack[0]:
+		raise ParseError("%s:%d: error, 'else' without ifdef or ifndef" % (filename, lineno))
 	
-	IFDEF_STACK[0] = not IFDEF_STACK[0]
-	debug('IFDEF_STACK : %s' % IFDEF_STACK[0])
+	v = p.ifdef_stack.pop(0)
+	if p.ifdef_stack[0]:
+		p.ifdef_stack.insert(0, not v)
+	else:
+		p.ifdef_stack.insert(0, False)
+	
+	p.else_stack[0] = False
 
 
 def parse_endif(p, arr, filename, lineno):
-	global IFDEF_STACK
-	
-	if len(arr) != 1:
+	if len(arr) > 1:
 		raise ParseError("%s:%d: syntax error, 'endif' takes no arguments" % (filename, lineno))
 	
-	if len(IFDEF_STACK) > 1:
-		IFDEF_STACK.pop(0)
-		debug('IFDEF_STACK : %s' % IFDEF_STACK[0])
-	else:
-		raise ParseError("%s:%d: error, 'endif' reached without matching 'ifdef'" % (filename, lineno))
+	if len(p.ifdef_stack) <= 1:
+		raise ParseError("%s:%d: error, 'endif' without ifdef or ifndef" % (filename, lineno))
+	
+	p.ifdef_stack.pop(0)
+	p.else_stack.pop(0)
 
 
 def parse_exit(p, arr, filename, lineno):
