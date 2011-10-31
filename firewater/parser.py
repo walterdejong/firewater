@@ -26,9 +26,6 @@ import sys
 import string
 
 
-THIS_MODULE = sys.modules['firewater.parser']
-
-
 class ParseError(Exception):
 	'''error message class for parse errors'''
 	
@@ -168,30 +165,17 @@ class Parser:
 				return 0
 		
 		# get the parser function
-		func_in_class = False
 		try:
 			func = getattr(self, 'parse_%s' % self.keyword)
 		except AttributeError:
-			try:
-				func = getattr(THIS_MODULE, 'parse_%s' % self.keyword)
-			except AttributeError:
-				stderr("%s: unknown keyword '%s'" % (self, self.keyword))
-				return 1
-		else:
-			func_in_class = True
+			stderr("%s: unknown keyword '%s'" % (self, self.keyword))
+			return 1
 		
-		if func_in_class:
-			try:
-				func(self.arr, self.filename, self.lineno)
-			except ParseError, (parse_error):
-				parse_error.perror()
-				return 1
-		else:
-			try:
-				func(self, self.arr, self.filename, self.lineno)
-			except ParseError, (parse_error):
-				parse_error.perror()
-				return 1
+		try:
+			func()
+		except ParseError, (parse_error):
+			parse_error.perror()
+			return 1
 		
 		return 0
 	
@@ -206,7 +190,8 @@ class Parser:
 	
 	### parser keywords ###
 	
-	def parse_include(self, arr, filename, lineno):
+	def parse_include(self):
+		arr = self.arr
 		if len(arr) <= 1:
 			raise ParseError("%s: 'include' requires a filename argument" % self)
 		
@@ -223,11 +208,12 @@ class Parser:
 			raise ParseError("%s: failed to read file '%s'" % (self, include_file))
 	
 	
-	def parse_iface(self, arr, filename, lineno):
-		self.parse_interface(arr, filename, lineno)
-
-
-	def parse_interface(self, arr, filename, lineno):
+	def parse_iface(self):
+		self.parse_interface()
+	
+	
+	def parse_interface(self):
+		arr = self.arr
 		if len(arr) < 3:
 			raise ParseError("%s: '%s' requires at least 2 arguments: the interface alias and the real interface name" % (self, self.keyword))
 		
@@ -265,18 +251,20 @@ class Parser:
 				all_ifaces.append(iface)
 	
 	
-	def parse_echo(self, arr, filename, lineno):
+	def parse_echo(self):
+		arr = self.arr
 		if len(arr) <= 1:
 			str = ''
 		else:
 			str = string.join(arr[1:])
 		
 		bytecode = firewater.bytecode.ByteCode()
-		bytecode.set_echo(filename, lineno, str)
+		bytecode.set_echo(self.filename, self.lineno, str)
 		firewater.globals.BYTECODE.append(bytecode)
 	
 	
-	def parse_host(self, arr, filename, lineno):
+	def parse_host(self):
+		arr = self.arr
 		if len(arr) < 3:
 			raise ParseError("%s: 'host' requires at least 2 arguments: the host alias and the IP address or fqdn" % self)
 		
@@ -345,11 +333,12 @@ class Parser:
 		firewater.globals.HOSTS[alias] = new_host_list
 	
 	
-	def parse_network(self, arr, filename, lineno):
-		self.parse_range(arr, filename, lineno)
+	def parse_network(self):
+		self.parse_range()
 	
 	
-	def parse_range(self, arr, filename, lineno):
+	def parse_range(self):
+		arr = self.arr
 		if len(arr) < 3:
 			raise ParseError("%s: '%s' requires at least 2 arguments: the range alias and the address range" % (self, arr[0]))
 		
@@ -410,7 +399,8 @@ class Parser:
 		firewater.globals.HOSTS[alias] = new_ranges_list
 	
 	
-	def parse_group(p, arr, filename, lineno):
+	def parse_group(self):
+		arr = self.arr
 		if len(arr) < 3:
 			raise ParseError("%s: 'group' requires at least 2 arguments: the group alias and at least 1 member" % self)
 		
@@ -479,11 +469,12 @@ class Parser:
 		firewater.globals.HOSTS[alias] = new_group_list
 	
 	
-	def parse_serv(self, arr, filename, lineno):
-		return self.parse_service(arr, filename, lineno)
+	def parse_serv(self):
+		return self.parse_service()
 	
 	
-	def parse_service(self, arr, filename, lineno):
+	def parse_service(self):
+		arr = self.arr
 		if len(arr) < 3:
 			raise ParseError("%s: '%s' requires at least 2 arguments: the service alias and at least 1 property" % (self, arr[0]))
 		
@@ -600,7 +591,8 @@ class Parser:
 		firewater.globals.SERVICES[alias] = obj
 	
 	
-	def parse_chain(self, arr, filename, lineno):
+	def parse_chain(self):
+		arr = self.arr
 		if len(arr) < 2:
 			raise ParseError("%s: syntax error" % self)
 		
@@ -631,7 +623,7 @@ class Parser:
 			
 			# emit default policy setting code
 			bytecode = firewater.bytecode.ByteCode()
-			bytecode.set_policy(filename, lineno, chain, policy)
+			bytecode.set_policy(self.filename, self.lineno, chain, policy)
 			firewater.globals.BYTECODE.append(bytecode)
 		
 		else:
@@ -640,7 +632,7 @@ class Parser:
 				debug('set current chain %s' % chain)
 				
 				bytecode = firewater.bytecode.ByteCode()
-				bytecode.set_chain(filename, lineno, chain)
+				bytecode.set_chain(self.filename, self.lineno, chain)
 				firewater.globals.BYTECODE.append(bytecode)
 			
 			else:
@@ -881,19 +873,20 @@ class Parser:
 		return iface_list
 	
 	
-	def parse_allow(self, arr, filename, lineno):
+	def parse_allow(self):
 		self._parse_rule()
 	
 	
-	def parse_deny(self, arr, filename, lineno):
+	def parse_deny(self):
 		self._parse_rule()
 	
 	
-	def parse_reject(self, arr, filename, lineno):
+	def parse_reject(self):
 		self._parse_rule()
 	
 	
-	def parse_verbatim(self, arr, filename, lineno):
+	def parse_verbatim(self):
+		arr = self.arr
 		if len(arr) > 1:
 			raise ParseError("%s: syntax error, 'verbatim' does not take any arguments" % self)
 		
@@ -903,7 +896,8 @@ class Parser:
 		self.verbatim_text = []
 	
 	
-	def parse_end(self, arr, filename, lineno):
+	def parse_end(self):
+		arr = self.arr
 		if len(arr) > 2:
 			raise ParseError("%s: syntax error, 'end' takes only one argument" % self)
 		
@@ -918,7 +912,7 @@ class Parser:
 			bytecode_end_verbatim = firewater.globals.BYTECODE.pop()
 			
 			bytecode = firewater.bytecode.ByteCode()
-			bytecode.set_verbatim(filename, lineno, self.verbatim_text)
+			bytecode.set_verbatim(self.filename, self.lineno, self.verbatim_text)
 			firewater.globals.BYTECODE.append(bytecode)
 			
 			firewater.globals.BYTECODE.append(bytecode_end_verbatim)
@@ -927,7 +921,8 @@ class Parser:
 			raise ParseError("%s: unknown argument '%s' to 'end'" % (self, arr[1]))
 	
 	
-	def parse_define(self, arr, filename, lineno):
+	def parse_define(self):
+		arr = self.arr
 		if len(arr) != 2:
 			raise ParseError("%s: syntax error, 'define' takes only one argument: a symbol to define" % self)
 		
@@ -935,7 +930,8 @@ class Parser:
 		firewater.globals.DEFINES.append(arr[1])
 	
 	
-	def parse_ifdef(self, arr, filename, lineno):
+	def parse_ifdef(self):
+		arr = self.arr
 		if len(arr) != 2:
 			raise ParseError("%s: syntax error, 'ifdef' takes only one argument: a defined symbol" % self)
 		
@@ -947,7 +943,8 @@ class Parser:
 		self.else_stack.insert(0, True)
 	
 	
-	def parse_ifndef(self, arr, filename, lineno):
+	def parse_ifndef(self):
+		arr = self.arr
 		if len(arr) != 2:
 			raise ParseError("%s: syntax error, 'ifdef' takes only one argument: a defined symbol" % self)
 		
@@ -959,7 +956,8 @@ class Parser:
 		self.else_stack.insert(0, True)
 	
 	
-	def parse_else(self, arr, filename, lineno):
+	def parse_else(self):
+		arr = self.arr
 		if len(arr) > 1:
 			raise ParseError("%s: syntax error, 'else' takes no arguments" % self)
 		
@@ -975,7 +973,8 @@ class Parser:
 		self.else_stack[0] = False
 
 
-	def parse_endif(self, arr, filename, lineno):
+	def parse_endif(self):
+		arr = self.arr
 		if len(arr) > 1:
 			raise ParseError("%s: syntax error, 'endif' takes no arguments" % self)
 		
@@ -986,7 +985,8 @@ class Parser:
 		self.else_stack.pop(0)
 	
 	
-	def parse_exit(self, arr, filename, lineno):
+	def parse_exit(self):
+		arr = self.arr
 		if len(arr) > 2:
 			raise ParseError("%s: syntax error, too many arguments to 'exit'" % self)
 		
@@ -999,7 +999,7 @@ class Parser:
 				raise ParseError("%s: syntax error, 'exit' may take an integer argument" % self)
 		
 		bytecode = firewater.bytecode.ByteCode()
-		bytecode.set_exit(filename, lineno, exit_code)
+		bytecode.set_exit(self.filename, self.lineno, exit_code)
 		firewater.globals.BYTECODE.append(bytecode)
 
 
