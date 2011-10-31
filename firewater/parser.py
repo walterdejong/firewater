@@ -744,11 +744,11 @@ class Parser:
 		debug('  iface   %s' % interface)
 		debug('}')
 		
-		sources = self._parse_rule_address(filename, lineno, source_addr)
-		source_port = self._parse_rule_service(filename, lineno, source_port)
-		destinations = self._parse_rule_address(filename, lineno, dest_addr)
-		dest_port = self._parse_rule_service(filename, lineno, dest_port)
-		ifaces = self._parse_rule_interfaces(filename, lineno, interface)
+		sources = self._parse_rule_address(source_addr)
+		source_port = self._parse_rule_service(source_port)
+		destinations = self._parse_rule_address(dest_addr)
+		dest_port = self._parse_rule_service(dest_port)
+		ifaces = self._parse_rule_interfaces(interface)
 		
 		debug('rule got {')
 		debug('  sources: ' + str(sources))
@@ -788,7 +788,7 @@ class Parser:
 						firewater.globals.BYTECODE.append(bytecode)
 	
 	
-	def _parse_rule_service(self, filename, lineno, service):
+	def _parse_rule_service(self, service):
 		'''returns ServiceObject for service'''
 		
 		if not service or service == 'any':
@@ -799,7 +799,7 @@ class Parser:
 			try:
 				service_port = int(service)
 			except ValueError:
-				raise ParseError("%s:%d: syntax error in number '%s'" % (filename, lineno, service))
+				raise ParseError("%s: syntax error in number '%s'" % (self, service))
 			
 			return firewater.service.ServiceObject(service, service_port)
 		
@@ -810,12 +810,12 @@ class Parser:
 		# system service
 		service_port = firewater.service.servbyname(service)
 		if service_port == None:
-			raise ParseError("%s:%d: unknown service '%s'" % (filename, lineno, service))
+			raise ParseError("%s: unknown service '%s'" % (self, service))
 		
 		return firewater.service.ServiceObject(service, service_port)
 
 
-	def _parse_rule_address(self, filename, lineno, address):
+	def _parse_rule_address(self, address):
 		'''returns list of addresses'''
 		
 		address_list = []
@@ -838,18 +838,18 @@ class Parser:
 			# treat as network range
 			a = string.split(address, '/')
 			if len(a) != 2:
-				raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, address))
+				raise ParseError("%s: invalid address range '%s'" % (self, address))
 			
 			if not _is_ipv4_address(a[0]):
-				raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, address))
+				raise ParseError("%s: invalid address range '%s'" % (self, address))
 			
 			try:
 				bits = int(a[1])
 			except ValueError:
-				raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, address))
+				raise ParseError("%s: invalid address range '%s'" % (self, address))
 			
 			if bits < 0 or bits > 32:
-				raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, address))
+				raise ParseError("%s: invalid address range '%s'" % (self, address))
 			
 			address_list.append(address)
 			return address_list
@@ -861,12 +861,12 @@ class Parser:
 		# treat as fqdn
 		address_list = firewater.resolv.resolv(address)
 		if not address_list:	# error
-			raise ParseError("%s:%d: failed to resolve '%s'" % (filename, lineno, address))
+			raise ParseError("%s: failed to resolve '%s'" % (self, address))
 		
 		return address_list
-
-
-	def _parse_rule_interfaces(self, filename, lineno, interface):
+	
+	
+	def _parse_rule_interfaces(self, interface):
 		iface_list = []
 		
 		if not interface or interface == 'any':
@@ -878,16 +878,16 @@ class Parser:
 		
 		iface_list.append(interface)
 		return iface_list
-
-
+	
+	
 	def parse_allow(self, arr, filename, lineno):
 		self._parse_rule(arr, filename, lineno)
-
-
+	
+	
 	def parse_deny(self, arr, filename, lineno):
 		self._parse_rule(arr, filename, lineno)
-
-
+	
+	
 	def parse_reject(self, arr, filename, lineno):
 		self._parse_rule(arr, filename, lineno)
 	
