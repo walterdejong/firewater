@@ -10,8 +10,8 @@
 
 #
 #	To make a new keyword for the input file, simply define a
-#	function here like: def parse_xxx(p, arr, filename, lineno, line):
-#	and it will just work (magic trick with getattr(module, functionname))
+#	Parser method like: def parse_xxx(self, arr, filename, lineno):
+#	and it will just work (magic trick with getattr(self, functionname))
 #
 
 import firewater.globals
@@ -84,7 +84,7 @@ class Parser:
 		self.file = None
 		
 		if self.in_verbatim:
-			ParseError("%s:%d: missing 'end verbatim' statement" % self).perror()
+			ParseError("%s: missing 'end verbatim' statement" % self).perror()
 		
 		self.lineno = 0
 		self.full_line = None
@@ -175,7 +175,7 @@ class Parser:
 			try:
 				func = getattr(THIS_MODULE, 'parse_%s' % self.keyword)
 			except AttributeError:
-				stderr("%s:%d: unknown keyword '%s'" % (self.filename, self.lineno, self.keyword))
+				stderr("%s: unknown keyword '%s'" % (self, self.keyword))
 				return 1
 		else:
 			func_in_class = True
@@ -208,7 +208,7 @@ class Parser:
 	
 	def parse_include(self, arr, filename, lineno):
 		if len(arr) <= 1:
-			raise ParseError("%s:%d: 'include' requires a filename argument" % (filename, lineno))
+			raise ParseError("%s: 'include' requires a filename argument" % self)
 		
 		include_file = string.join(arr[1:])
 		
@@ -217,10 +217,10 @@ class Parser:
 		try:
 			# recursively read the given parse file
 			if read_input_file(include_file) > 0:
-				raise ParseError("%s:%d: error in included file %s" % (filename, lineno, include_file))
+				raise ParseError("%s: error in included file %s" % (self, include_file))
 		
 		except IOError:
-			raise ParseError("%s:%d: failed to read file '%s'" % (filename, lineno, include_file))
+			raise ParseError("%s: failed to read file '%s'" % (self, include_file))
 	
 	
 	def parse_iface(self, arr, filename, lineno):
@@ -229,20 +229,20 @@ class Parser:
 
 	def parse_interface(self, arr, filename, lineno):
 		if len(arr) < 3:
-			raise ParseError("%s:%d: '%s' requires at least 2 arguments: the interface alias and the real interface name" % (filename, lineno, arr[0]))
+			raise ParseError("%s: '%s' requires at least 2 arguments: the interface alias and the real interface name" % (self, self.keyword))
 		
 		alias = arr[1]
 		if alias == 'any':
-			raise ParseError("%s:%d: 'any' is a reserved word" % (filename, lineno))
+			raise ParseError("%s: 'any' is a reserved word" % self)
 		
 		iface_list = string.join(arr[2:])
 		iface_list = string.split(iface_list, ',')
 		
 		if alias in iface_list:
-			raise ParseError("%s:%d: interface %s references back to itself" % (filename, lineno, alias))
+			raise ParseError("%s: interface %s references back to itself" % (self, alias))
 		
 		if firewater.globals.INTERFACES.has_key(alias):
-			raise ParseError("%s:%d: redefinition of interface %s" % (filename, lineno, alias))
+			raise ParseError("%s: redefinition of interface %s" % (self, alias))
 		
 		# expand the list by filling in any previously defined aliases
 		new_iface_list = []
@@ -278,11 +278,11 @@ class Parser:
 	
 	def parse_host(self, arr, filename, lineno):
 		if len(arr) < 3:
-			raise ParseError("%s:%d: 'host' requires at least 2 arguments: the host alias and the IP address or fqdn" % (filename, lineno))
+			raise ParseError("%s: 'host' requires at least 2 arguments: the host alias and the IP address or fqdn" % self)
 		
 		alias = arr[1]
 		if alias == 'any':
-			raise ParseError("%s:%d: 'any' is a reserved word" % (filename, lineno))
+			raise ParseError("%s: 'any' is a reserved word" % self)
 		
 		host_list = string.join(arr[2:])
 		host_list = string.replace(host_list, ' ', '')
@@ -290,10 +290,10 @@ class Parser:
 		host_list = string.split(host_list, ',')
 		
 		if alias in host_list:
-			raise ParseError("%s:%d: host %s references back to itself" % (filename, lineno, alias))
+			raise ParseError("%s: host %s references back to itself" % (self, alias))
 		
 		if firewater.globals.HOSTS.has_key(alias):
-			raise ParseError("%s:%d: redefinition of host %s" % (filename, lineno, alias))
+			raise ParseError("%s: redefinition of host %s" % (self, alias))
 		
 		# expand the list by filling in any previously defined aliases
 		new_host_list = []
@@ -311,13 +311,13 @@ class Parser:
 					# treat as network range
 					a = string.split(host, '/')
 					if len(a) != 2:
-						raise ParseError("%s:%d: invalid host address '%s'" % (filename, lineno, host))
+						raise ParseError("%s: invalid host address '%s'" % (self, host))
 					
 					if not _is_ipv4_address(a[0]):
-						raise ParseError("%s:%d: invalid host address '%s'" % (filename, lineno, host))
+						raise ParseError("%s: invalid host address '%s'" % (self, host))
 					
 					if a[1] != '32':
-						raise ParseError("%s:%d: invalid host address '%s'" % (filename, lineno, host))
+						raise ParseError("%s: invalid host address '%s'" % (self, host))
 					
 					pass
 				
@@ -329,7 +329,7 @@ class Parser:
 					# treat as fqdn, so resolve the address
 					addrs = firewater.resolv.resolv(host)
 					if addrs == None:	# error
-						raise ParseError("%s:%d: failed to resolve '%s'" % (filename, lineno, host))
+						raise ParseError("%s: failed to resolve '%s'" % (self, host))
 					
 					for addr in addrs:
 						if not addr in new_host_list:
@@ -351,11 +351,11 @@ class Parser:
 	
 	def parse_range(self, arr, filename, lineno):
 		if len(arr) < 3:
-			raise ParseError("%s:%d: '%s' requires at least 2 arguments: the range alias and the address range" % (filename, lineno, arr[0]))
+			raise ParseError("%s: '%s' requires at least 2 arguments: the range alias and the address range" % (self, arr[0]))
 		
 		alias = arr[1]
 		if alias == 'any':
-			raise ParseError("%s:%d: 'any' is a reserved word" % (filename, lineno))
+			raise ParseError("%s: 'any' is a reserved word" % self)
 		
 		ranges_list = string.join(arr[2:])
 		ranges_list = string.replace(ranges_list, ' ', '')
@@ -363,11 +363,11 @@ class Parser:
 		ranges_list = string.split(ranges_list, ',')
 		
 		if alias in ranges_list:
-			raise ParseError("%s:%d: %s %s references back to itself" % (filename, lineno, arr[0], alias))
+			raise ParseError("%s: %s %s references back to itself" % (self, arr[0], alias))
 		
 		# note that ranges are stored in the same way as hosts
 		if firewater.globals.HOSTS.has_key(alias):
-			raise ParseError("%s:%d: redefinition of %s or host %s" % (filename, lineno, arr[0], alias))
+			raise ParseError("%s: redefinition of %s or host %s" % (self, arr[0], alias))
 		
 		# expand the list by filling in any previously defined aliases
 		new_ranges_list = []
@@ -386,21 +386,21 @@ class Parser:
 					# treat as network range
 					a = string.split(host, '/')
 					if len(a) != 2:
-						raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, host))
+						raise ParseError("%s: invalid address range '%s'" % (self, host))
 					
 					if not _is_ipv4_address(a[0]):
-						raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, host))
+						raise ParseError("%s: invalid address range '%s'" % (self, host))
 					
 					try:
 						bits = int(a[1])
 					except ValueError:
-						raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, host))
+						raise ParseError("%s: invalid address range '%s'" % (self, host))
 					
 					if bits < 0 or bits > 32:
-						raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, host))
+						raise ParseError("%s: invalid address range '%s'" % (self, host))
 				
 				else:
-					raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, host))
+					raise ParseError("%s: invalid address range '%s'" % (self, host))
 				
 				if not host in new_ranges_list:
 					new_ranges_list.append(host)
@@ -412,11 +412,11 @@ class Parser:
 	
 	def parse_group(p, arr, filename, lineno):
 		if len(arr) < 3:
-			raise ParseError("%s:%d: 'group' requires at least 2 arguments: the group alias and at least 1 member" % (filename, lineno))
+			raise ParseError("%s: 'group' requires at least 2 arguments: the group alias and at least 1 member" % self)
 		
 		alias = arr[1]
 		if alias == 'any':
-			raise ParseError("%s:%d: 'any' is a reserved word" % (filename, lineno))
+			raise ParseError("%s: 'any' is a reserved word" % self)
 		
 		group_list = string.join(arr[2:], ',')
 		group_list = string.replace(group_list, ' ', '')
@@ -424,11 +424,11 @@ class Parser:
 		group_list = string.split(group_list, ',')
 		
 		if alias in group_list:
-			raise ParseError("%s:%d: range %s references back to itself" % (filename, lineno, alias))
+			raise ParseError("%s: range %s references back to itself" % (self, alias))
 		
 		# note that group are stored in the same way as groups
 		if firewater.globals.HOSTS.has_key(alias):
-			raise ParseError("%s:%d: redefinition of range or group %s" % (filename, lineno, alias))
+			raise ParseError("%s: redefinition of range or group %s" % (self, alias))
 		
 		# expand the list by filling in any previously defined aliases
 		new_group_list = []
@@ -446,24 +446,24 @@ class Parser:
 					# treat as network range
 					a = string.split(group, '/')
 					if len(a) != 2:
-						raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, group))
+						raise ParseError("%s: invalid address range '%s'" % (self, group))
 					
 					if not _is_ipv4_address(a[0]):
-						raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, group))
+						raise ParseError("%s: invalid address range '%s'" % (self, group))
 					
 					try:
 						bits = int(a[1])
 					except ValueError:
-						raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, group))
+						raise ParseError("%s: invalid address range '%s'" % (self, group))
 					
 					if bits < 0 or bits > 32:
-						raise ParseError("%s:%d: invalid address range '%s'" % (filename, lineno, group))
+						raise ParseError("%s: invalid address range '%s'" % (self, group))
 				
 				else:
 					# treat as fqdn, so resolve the address
 					addrs = firewater.resolv.resolv(group)
 					if addrs == None:	# error
-						raise ParseError("%s:%d: failed to resolve '%s'" % (filename, lineno, group))
+						raise ParseError("%s: failed to resolve '%s'" % (self, group))
 					
 					for addr in addrs:
 						if not addr in new_group_list:
@@ -485,14 +485,14 @@ class Parser:
 	
 	def parse_service(self, arr, filename, lineno):
 		if len(arr) < 3:
-			raise ParseError("%s:%d: '%s' requires at least 2 arguments: the service alias and at least 1 property" % (filename, lineno, arr[0]))
+			raise ParseError("%s: '%s' requires at least 2 arguments: the service alias and at least 1 property" % (self, arr[0]))
 		
 		alias = arr[1]
 		if alias == 'any':
-			raise ParseError("%s:%d: 'any' is a reserved word" % (filename, lineno))
+			raise ParseError("%s: 'any' is a reserved word" % self)
 		
 		if firewater.globals.SERVICES.has_key(alias):
-			raise ParseError("%s:%d: redefinition of service %s" % (filename, lineno, alias))
+			raise ParseError("%s: redefinition of service %s" % (self, alias))
 		
 		obj = firewater.service.ServiceObject(alias)
 		
@@ -500,7 +500,7 @@ class Parser:
 			obj.proto = arr.pop(2)
 		
 		if len(arr) < 3:
-			raise ParseError("%s:%d: missing service or port number" % (filename, lineno))
+			raise ParseError("%s: missing service or port number" % self)
 		
 		if string.find(string.digits, arr[2][0]) > -1:
 			# treat as port number or range
@@ -510,23 +510,23 @@ class Parser:
 				
 				port_arr = string.split(port_range, '-')
 				if len(port_arr) != 2:
-					raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+					raise ParseError("%s: invalid port range '%s'" % (self, port_range))
 				
 				try:
 					obj.port = int(port_arr[0])
 				except ValueError:
-					raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+					raise ParseError("%s: invalid port range '%s'" % (self, port_range))
 				
 				try:
 					obj.endport = int(port_arr[1])
 				except ValueError:
-					raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+					raise ParseError("%s: invalid port range '%s'" % (self, port_range))
 				
 				if obj.port < -1 or obj.port > 65535:
-					raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+					raise ParseError("%s: invalid port range '%s'" % (self, port_range))
 				
 				if obj.endport < -1 or obj.endport > 65535 or obj.endport < obj.port:
-					raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+					raise ParseError("%s: invalid port range '%s'" % (self, port_range))
 			
 			elif string.find(arr[2], ':') > -1:
 				# treat as port range (same code as above, split by ':') (yeah stupid, I know)
@@ -534,34 +534,34 @@ class Parser:
 				
 				port_arr = string.split(port_range, ':')
 				if len(port_arr) != 2:
-					raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+					raise ParseError("%s: invalid port range '%s'" % (self, port_range))
 				
 				try:
 					obj.port = int(port_arr[0])
 				except ValueError:
-					raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+					raise ParseError("%s: invalid port range '%s'" % (self, port_range))
 				
 				try:
 					obj.endport = int(port_arr[1])
 				except ValueError:
-					raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+					raise ParseError("%s: invalid port range '%s'" % (self, port_range))
 				
 				if obj.port < -1 or obj.port > 65535:
-					raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+					raise ParseError("%s: invalid port range '%s'" % (self, port_range))
 				
 				if obj.endport < -1 or obj.endport > 65535 or obj.endport < obj.port:
-					raise ParseError("%s:%d: invalid port range '%s'" % (filename, lineno, port_range))
+					raise ParseError("%s: invalid port range '%s'" % (self, port_range))
 			
 			else:
 				# single port number
 				try:
 					obj.port = int(arr[2])
 				except ValueError:
-					raise ParseError("%s:%d: invalid port number '%s'" % (filename, lineno, arr[2]))
+					raise ParseError("%s: invalid port number '%s'" % (self, arr[2]))
 		
 		else:
 			if arr[2] == alias:
-				raise ParseError("%s:%d: service %s references back to itself" % (filename, lineno))
+				raise ParseError("%s: service %s references back to itself" % self)
 			
 			if firewater.globals.SERVICES.has_key(arr[2]):
 				obj2 = firewater.globals.SERVICES[arr[2]]
@@ -578,7 +578,7 @@ class Parser:
 				# treat as system service name
 				obj.port = firewater.service.servbyname(arr[2])
 				if obj.port == None:
-					raise ParseError("%s:%d: no such service '%s'" % (filename, lineno, arr[2]))
+					raise ParseError("%s: no such service '%s'" % (self, arr[2]))
 		
 		if len(arr) > 3:
 			if arr[3] in ('iface', 'interface'):
@@ -593,7 +593,7 @@ class Parser:
 						obj.iface.append(arr[4])
 				
 				else:
-					raise ParseError("%s:%d: too many arguments to '%s'" % (filename, lineno, arr[0]))
+					raise ParseError("%s: too many arguments to '%s'" % (self, arr[0]))
 		
 		debug('new service: %s:%s' % (alias, obj))
 		
@@ -602,23 +602,23 @@ class Parser:
 	
 	def parse_chain(self, arr, filename, lineno):
 		if len(arr) < 2:
-			raise ParseError("%s:%d: syntax error" % (filename, lineno))
+			raise ParseError("%s: syntax error" % self)
 		
 		chain = arr[1]
 		
 		if not chain in ('incoming', 'outgoing', 'forwarding'):
-			raise ParseError("%s:%d: syntax error: unknown chain '%s'" % (filename, lineno, chain))
+			raise ParseError("%s: syntax error: unknown chain '%s'" % (self, chain))
 		
 		if len(arr) == 5:
 			if arr[2] != 'default' or arr[3] != 'policy':
-				raise ParseError("%s:%d: syntax error" % (filename, lineno))
+				raise ParseError("%s: syntax error" % self)
 			
 			policy = arr[4]
 			
 			debug('policy == %s' % policy)
 			
 			if not policy in ('allow', 'deny', 'accept', 'drop'):
-				raise ParseError("%s:%d: syntax error: unknown policy '%s'" % (filename, lineno, policy))
+				raise ParseError("%s: syntax error: unknown policy '%s'" % (self, policy))
 			
 			# allow for common aliases to be used here
 			if policy == 'accept':
@@ -644,7 +644,7 @@ class Parser:
 				firewater.globals.BYTECODE.append(bytecode)
 			
 			else:
-				raise ParseError("%s:%d: syntax error" % (filename, lineno))
+				raise ParseError("%s: syntax error" % self)
 	
 	
 	def _parse_rule(self):
@@ -895,7 +895,7 @@ class Parser:
 	
 	def parse_verbatim(self, arr, filename, lineno):
 		if len(arr) > 1:
-			raise ParseError("%s:%d: syntax error, 'verbatim' does not take any arguments" % (filename, lineno))
+			raise ParseError("%s: syntax error, 'verbatim' does not take any arguments" % self)
 		
 		debug('in verbatim')
 		
@@ -905,11 +905,11 @@ class Parser:
 	
 	def parse_end(self, arr, filename, lineno):
 		if len(arr) > 2:
-			raise ParseError("%s:%d: syntax error, 'end' takes only one argument" % (filename, lineno))
+			raise ParseError("%s: syntax error, 'end' takes only one argument" % self)
 		
 		if arr[1] == 'verbatim':
 			if not self.in_verbatim:
-				raise ParseError("%s:%d: 'end' can not be used here" % (filename, lineno))
+				raise ParseError("%s: 'end' can not be used here" % self)
 			
 			debug('end verbatim')
 			
@@ -924,12 +924,12 @@ class Parser:
 			firewater.globals.BYTECODE.append(bytecode_end_verbatim)
 			
 		else:
-			raise ParseError("%s:%d: unknown argument '%s' to 'end'" % (filename, lineno, arr[1]))
+			raise ParseError("%s: unknown argument '%s' to 'end'" % (self, arr[1]))
 	
 	
 	def parse_define(self, arr, filename, lineno):
 		if len(arr) != 2:
-			raise ParseError("%s:%d: syntax error, 'define' takes only one argument: a symbol to define" % (filename, lineno))
+			raise ParseError("%s: syntax error, 'define' takes only one argument: a symbol to define" % self)
 		
 		debug('parser: define "%s"' % arr[1])
 		firewater.globals.DEFINES.append(arr[1])
@@ -937,7 +937,7 @@ class Parser:
 	
 	def parse_ifdef(self, arr, filename, lineno):
 		if len(arr) != 2:
-			raise ParseError("%s:%d: syntax error, 'ifdef' takes only one argument: a defined symbol" % (filename, lineno))
+			raise ParseError("%s: syntax error, 'ifdef' takes only one argument: a defined symbol" % self)
 		
 		if self.ifdef_stack[0]:
 			self.ifdef_stack.insert(0, arr[1] in firewater.globals.DEFINES)
@@ -949,7 +949,7 @@ class Parser:
 	
 	def parse_ifndef(self, arr, filename, lineno):
 		if len(arr) != 2:
-			raise ParseError("%s:%d: syntax error, 'ifdef' takes only one argument: a defined symbol" % (filename, lineno))
+			raise ParseError("%s: syntax error, 'ifdef' takes only one argument: a defined symbol" % self)
 		
 		if self.ifdef_stack[0]:
 			self.ifdef_stack.insert(0, not arr[1] in firewater.globals.DEFINES)
@@ -961,10 +961,10 @@ class Parser:
 	
 	def parse_else(self, arr, filename, lineno):
 		if len(arr) > 1:
-			raise ParseError("%s:%d: syntax error, 'else' takes no arguments" % (filename, lineno))
+			raise ParseError("%s: syntax error, 'else' takes no arguments" % self)
 		
 		if len(self.ifdef_stack) <= 1 or not self.else_stack[0]:
-			raise ParseError("%s:%d: error, 'else' without ifdef or ifndef" % (filename, lineno))
+			raise ParseError("%s: error, 'else' without ifdef or ifndef" % self)
 		
 		v = self.ifdef_stack.pop(0)
 		if self.ifdef_stack[0]:
@@ -977,10 +977,10 @@ class Parser:
 
 	def parse_endif(self, arr, filename, lineno):
 		if len(arr) > 1:
-			raise ParseError("%s:%d: syntax error, 'endif' takes no arguments" % (filename, lineno))
+			raise ParseError("%s: syntax error, 'endif' takes no arguments" % self)
 		
 		if len(self.ifdef_stack) <= 1:
-			raise ParseError("%s:%d: error, 'endif' without ifdef or ifndef" % (filename, lineno))
+			raise ParseError("%s: error, 'endif' without ifdef or ifndef" % self)
 		
 		self.ifdef_stack.pop(0)
 		self.else_stack.pop(0)
@@ -988,7 +988,7 @@ class Parser:
 	
 	def parse_exit(self, arr, filename, lineno):
 		if len(arr) > 2:
-			raise ParseError("%s:%d: syntax error, too many arguments to 'exit'" % (filename, lineno))
+			raise ParseError("%s: syntax error, too many arguments to 'exit'" % self)
 		
 		exit_code = 0
 		
@@ -996,7 +996,7 @@ class Parser:
 			try:
 				exit_code = int(arr[1])
 			except ValueError:
-				raise ParseError("%s:%d: syntax error, 'exit' may take an integer argument" % (filename, lineno))
+				raise ParseError("%s: syntax error, 'exit' may take an integer argument" % self)
 		
 		bytecode = firewater.bytecode.ByteCode()
 		bytecode.set_exit(filename, lineno, exit_code)
@@ -1040,7 +1040,7 @@ def read_input_file(filename):	# throws IOError
 		parser.interpret()
 	
 	if len(parser.ifdef_stack) > 1:
-		ParseError("%s:%d: missing 'endif' statement" % (filename, lineno)).perror()
+		ParseError("%s: missing 'endif' statement" % parser).perror()
 		errors = errors + 1
 	
 	parser.close()
