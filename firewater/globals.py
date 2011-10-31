@@ -36,9 +36,6 @@ MODULE = 'iptables'
 # the final output is generated from this bytecode
 BYTECODE = []
 
-# array of lines of verbatim text
-VERBATIM_TEXT = []
-
 # array of defines
 DEFINES = []
 
