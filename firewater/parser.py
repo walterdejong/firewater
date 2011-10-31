@@ -647,7 +647,7 @@ class Parser:
 				raise ParseError("%s:%d: syntax error" % (filename, lineno))
 	
 	
-	def _parse_rule(self, arr, filename, lineno):
+	def _parse_rule(self):
 		'''parse a rule
 		
 		rule syntax:
@@ -655,17 +655,18 @@ class Parser:
 		allow|deny|reject [<proto>] [from <source> [port <service>]] \
 		[to <dest> [port <service>]] [on [interface|iface] <iface> [interface]]'''
 		
+		arr = self.arr
 		allow = arr.pop(0)
 		
 		if len(arr) < 1:
-			raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
+			raise ParseError("%s: syntax error, premature end of line" % self)
 		
 		proto = None
 		if arr[0] in firewater.globals.KNOWN_PROTOCOLS:
 			proto = arr.pop(0)
 		
 		if len(arr) <= 1:
-			raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
+			raise ParseError("%s: syntax error, premature end of line" % self)
 		
 		# the line can be parsed using tokens
 		
@@ -679,11 +680,11 @@ class Parser:
 			token = arr.pop(0)
 			
 			if len(arr) < 1:
-				raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
+				raise ParseError("%s: syntax error, premature end of line" % self)
 			
 			if token == 'from':
 				if source_addr != None:
-					raise ParseError("%s:%d: syntax error ('from' is used multiple times)" % (filename, lineno))
+					raise ParseError("%s: syntax error ('from' is used multiple times)" % self)
 				
 				source_addr = arr.pop(0)
 				
@@ -693,7 +694,7 @@ class Parser:
 						arr.pop(0)
 						
 						if len(arr) < 1:
-							raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
+							raise ParseError("%s: syntax error, premature end of line" % self)
 						
 						source_port = arr.pop(0)
 				
@@ -701,7 +702,7 @@ class Parser:
 			
 			elif token == 'to':
 				if dest_addr != None:
-					raise ParseError("%s:%d: syntax error ('to' is used multiple times)" % (filename, lineno))
+					raise ParseError("%s: syntax error ('to' is used multiple times)" % self)
 				
 				dest_addr = arr.pop(0)
 				
@@ -711,7 +712,7 @@ class Parser:
 						arr.pop(0)
 						
 						if len(arr) < 1:
-							raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
+							raise ParseError("%s: syntax error, premature end of line" % self)
 						
 						dest_port = arr.pop(0)
 				
@@ -719,13 +720,13 @@ class Parser:
 			
 			elif token == 'on':
 				if interface != None:
-					raise ParseError("%s:%d: syntax error ('on' is used multiple times)" % (filename, lineno))
+					raise ParseError("%s: syntax error ('on' is used multiple times)" % self)
 				
 				if arr[0] in ('interface', 'iface'):
 					arr.pop(0)
 					
 					if len(arr) < 1:
-						raise ParseError("%s:%d: syntax error, premature end of line" % (filename, lineno))
+						raise ParseError("%s: syntax error, premature end of line" % self)
 				
 				interface = arr.pop(0)
 				
@@ -735,7 +736,7 @@ class Parser:
 				continue
 			
 			else:
-				raise ParseError("%s:%d: syntax error, unknown token '%s'" % (filename, lineno, token))
+				raise ParseError("%s: syntax error, unknown token '%s'" % (self, token))
 		
 		debug('rule {')
 		debug('  %s proto %s' % (allow, proto))
@@ -766,7 +767,7 @@ class Parser:
 				proto = dest_port.proto
 			
 			if not proto:
-				raise ParseError("%s:%d: missing protocol" % (filename, lineno))
+				raise ParseError("%s: missing protocol" % self)
 		
 		#
 		# save the rule in globals.BYTECODE[]
@@ -776,15 +777,15 @@ class Parser:
 		for src in sources:
 			for dest in destinations:
 				if not ifaces:
-					debug('%s:%d: %s %s %s eq %s %s eq %s' % (filename, lineno, allow, proto, src, source_port, dest, dest_port))
+					debug('%s: %s %s %s eq %s %s eq %s' % (self, allow, proto, src, source_port, dest, dest_port))
 					bytecode = firewater.bytecode.ByteCode()
-					bytecode.set_rule(filename, lineno, allow, proto, src, source_port, dest, dest_port, None)
+					bytecode.set_rule(self.filename, self.lineno, allow, proto, src, source_port, dest, dest_port, None)
 					firewater.globals.BYTECODE.append(bytecode)
 				else:
 					for iface in ifaces:
-						debug('%s:%d: %s %s %s eq %s %s eq %s on %s' % (filename, lineno, allow, proto, src, source_port, dest, dest_port, iface))
+						debug('%s: %s %s %s eq %s %s eq %s on %s' % (self, allow, proto, src, source_port, dest, dest_port, iface))
 						bytecode = firewater.bytecode.ByteCode()
-						bytecode.set_rule(filename, lineno, allow, proto, src, source_port, dest, dest_port, iface)
+						bytecode.set_rule(self.filename, self.lineno, allow, proto, src, source_port, dest, dest_port, iface)
 						firewater.globals.BYTECODE.append(bytecode)
 	
 	
@@ -881,15 +882,15 @@ class Parser:
 	
 	
 	def parse_allow(self, arr, filename, lineno):
-		self._parse_rule(arr, filename, lineno)
+		self._parse_rule()
 	
 	
 	def parse_deny(self, arr, filename, lineno):
-		self._parse_rule(arr, filename, lineno)
+		self._parse_rule()
 	
 	
 	def parse_reject(self, arr, filename, lineno):
-		self._parse_rule(arr, filename, lineno)
+		self._parse_rule()
 	
 	
 	def parse_verbatim(self, arr, filename, lineno):
