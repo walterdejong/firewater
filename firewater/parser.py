@@ -26,12 +26,149 @@ import sys
 import string
 
 
+THIS_MODULE = sys.modules['firewater.parser']
+
 # status; are we copying verbatim or not?
 IN_VERBATIM = False
 
 # nested ifdefs
 # the IFDEF_STACK[0] tells whether statements may be executed or not
 IFDEF_STACK = [ True ]
+
+
+class Parser:
+	'''class that parses an input file'''
+	
+	def __init__(self):
+		self.filename = None
+		self.file = None
+		self.lineno = 0
+		self.full_line = None
+		self.line = None
+		self.comment = None
+		self.arr = None
+		self.keyword = None
+		self.errors = 0
+		self.in_verbatim = False
+		self.verbatim_text = None
+	
+	def __repr__(self):
+		return '%s:%d' % (self.filename, self.lineno)
+	
+	def open(self, filename):
+		self.filename = filename
+		self.file = open(self.filename, 'r')
+		self.lineno = 1
+		self.verbatim_text = []
+	
+	def close(self):
+		self.file.close()
+		self.file = None
+		
+		if self.in_verbatim:
+			ParseError("%s:%d: missing 'end verbatim' statement" % self).perror()
+		
+		self.lineno = 0
+		self.full_line = None
+		self.line = None
+		self.comment = None
+		self.arr = None
+		self.keyword = None
+		self.in_verbatim = False
+		self.verbatim_text = None
+	
+	def getline(self):
+		'''read statement from input file'''
+		'''Upon return, self.keyword should be set, as well as other members'''
+		'''Returns True when OK, False on EOF'''
+		
+		self.full_line = None
+		self.line = ''
+		self.comment = None
+		self.arr = None
+		self.keyword = None
+		
+		while True:
+			#
+			#	read lines from the input file
+			#	variable tmp_line is used to be able to do multi-line reads (backslash terminated)
+			#
+			tmp_line = self.file.readline()
+			if not tmp_line:
+				return False
+			
+			self.lineno = self.lineno + 1
+			
+			if self.in_verbatim:
+				# copy verbatim until the statement 'end verbatim' is reached
+				verbatim_line = string.strip(tmp_line)
+				arr = string.split(string.lower(verbatim_line))
+				# it is tested with an array so that both spaces and tabs work
+				# note that this shadows the 'end' keyword, but only when in verbatim mode
+				if not (len(arr) == 2 and arr[0] == 'end' and arr[1] == 'verbatim'):
+					debug('verbatim line == [%s]' % verbatim_line)
+					# TODO remove this global
+					firewater.globals.VERBATIM.append(verbatim_line)
+					self.verbatim_text.append(verbatim_line)
+					continue
+			
+			n = string.find(tmp_line, '#')
+			if n >= 0:
+				self.comment = '    ' + string.strip(tmp_line[n:])
+				tmp_line = tmp_line[:n]		# strip comment
+			else:
+				self.comment = ''
+			
+			tmp_line = string.strip(tmp_line)
+			if not tmp_line:
+				continue
+			
+			if tmp_line[-1] == '\\':
+				tmp_line = string.strip(tmp_line[:-1])
+				self.line = self.line + ' ' + tmp_line
+				continue
+			
+			self.line = self.line + ' ' + tmp_line
+			self.full_line = self.line + self.comment
+			self.arr = string.split(self.line)
+			self.keyword = string.lower(self.arr[0])
+			break
+		
+		return True
+	
+	def interpret(self):
+		'''interpret a line (first call Parser.getline())'''
+		'''Returns 0 on success, 1 on error'''
+		
+		if not self.keyword:
+			raise ParseError('%s: no keyword set; invalid parser state' % self)
+			return 1
+		
+		# insert the line into bytecode as comment
+		# (this will be displayed in verbose mode)
+		bytecode = firewater.bytecode.ByteCode()
+		bytecode.set_comment(self.filename, self.lineno, self.full_line)
+		
+		if not IFDEF_STACK[0]:
+			if not self.keyword in ('else', 'endif'):
+				return 0
+		
+		firewater.globals.BYTECODE.append(bytecode)
+		
+		# get the parser function
+		try:
+			func = getattr(THIS_MODULE, 'parse_%s' % self.keyword)
+		except AttributeError:
+			stderr("%s:%d: unknown keyword '%s'" % (self.filename, self.lineno, self.keyword))
+			return 1
+		
+		try:
+			func(self.arr, self.filename, self.lineno)
+		except ParseError, (parse_error):
+			parse_error.perror()
+			return 1
+		
+		return 0
 
 
 class ParseError(Exception):
@@ -55,91 +192,14 @@ def read_input_file(filename):	# throws IOError
 	'''read a (included) input file
 	Returns 0 on success, or error count on errors'''
 	
-	f = open(filename, 'r')
+	parser = Parser()
+	parser.open(filename)
 	
-	this_module = sys.modules['firewater.parser']
+	while parser.getline():
+		parser.interpret()
 	
-	lineno = 0
-	errors = 0
-	
-	#
-	#	read lines from the input file
-	#	variable tmp_line is used to be able to do multi-line reads (backslash terminated)
-	#
-	line = ''
-	while True:
-		tmp_line = f.readline()
-		if not tmp_line:
-			break
-		
-		lineno = lineno + 1
-		
-		if IN_VERBATIM:
-			# copy verbatim until the statement 'end verbatim' is reached
-			verbatim_line = string.strip(tmp_line)
-			arr = string.split(string.lower(verbatim_line))
-			# it is tested with an array so that both spaces and tabs work
-			# note that this shadows the 'end' keyword, but only when in verbatim mode
-			if not (len(arr) == 2 and arr[0] == 'end' and arr[1] == 'verbatim'):
-				debug('verbatim line == [%s]' % verbatim_line)
-				firewater.globals.VERBATIM.append(verbatim_line)
-				continue
-		
-		n = string.find(tmp_line, '#')
-		if n >= 0:
-			stripped_comment = '    ' + string.strip(tmp_line[n:])
-			tmp_line = tmp_line[:n]		# strip comment
-		else:
-			stripped_comment = ''
-		
-		tmp_line = string.strip(tmp_line)
-		if not tmp_line:
-			continue
-		
-		if tmp_line[-1] == '\\':
-			tmp_line = string.strip(tmp_line[:-1])
-			line = line + ' ' + tmp_line
-			continue
-		
-		line = line + ' ' + tmp_line
-		tmp_line = ''
-		
-		arr = string.split(line)
-		
-		# insert the line into bytecode as comment
-		# (this will be displayed in verbose mode)
-		bytecode = firewater.bytecode.ByteCode()
-		bytecode.set_comment(filename, lineno, line + stripped_comment)
-		
-		line = ''	# <-- line is being reset here; use arr[] from here on
-		
-		keyword = string.lower(arr[0])
-		
-		if not IFDEF_STACK[0]:
-			if not keyword in ('else', 'endif'):
-				continue
-		
-		firewater.globals.BYTECODE.append(bytecode)
-		
-		# get the parser function
-		try:
-			func = getattr(this_module, 'parse_%s' % keyword)
-		except AttributeError:
-			stderr("%s:%d: unknown keyword '%s'" % (filename, lineno, keyword))
-			errors = errors + 1
-			continue
-		
-		try:
-			func(arr, filename, lineno)
-		except ParseError, (parse_error):
-			parse_error.perror()
-			errors = errors + 1
-	
-	f.close()
-	
-	if IN_VERBATIM:
-		ParseError("%s:%d: missing 'end verbatim' statement" % (filename, lineno)).perror()
-		errors = errors + 1
+	parser.close()
+	errors = parser.errors
 	
 	if len(IFDEF_STACK) > 1:
 		ParseError("%s:%d: missing 'endif' statement" % (filename, lineno)).perror()
