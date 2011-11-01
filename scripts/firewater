@@ -149,6 +149,10 @@ def get_options():
 def main():
 	input_files = get_options()
 	
+	# define the name of the current output module as a 'DEFINE'
+	if not firewater.globals.MODULE in firewater.globals.DEFINES:
+		firewater.globals.DEFINES.insert(0, firewater.globals.MODULE)
+	
 	# read input: the rule set
 	errors = 0
 	
@@ -160,10 +164,6 @@ def main():
 	
 	if errors:
 		sys.exit(1)
-	
-	# define the name of the current output module as a 'DEFINE'
-	if not firewater.globals.MODULE in firewater.globals.DEFINES:
-		firewater.globals.DEFINES.insert(0, firewater.globals.MODULE)
 	
 	# generate output: the translated rules
 	generate()
