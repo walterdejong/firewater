@@ -231,6 +231,12 @@ network localnet 10.0.0.0/8<br />
 <br />
 range classb 192.168.0.0/16
 </div>
+As you can see, both names and addresses can be used for creating host aliases.
+firewater can use DNS to resolve names so you don't have to explicitly list
+all hosts by address. However, it is often nice to use a short alias for a
+host rather than its fully qualified domain name.
+</p>
+<p>
 Note that the <span class="system">network</span> keyword is merely an alias for
 the <span class="system">range</span> keyword; they have the exact same
 meaning.
@@ -245,6 +251,26 @@ IPv6 addresses are supported, just not very well tested.
 </div>
 
 
-
+<div>
+<h2 id="group">4.4 Logical groups</h2>
+<p>
+Now that we have defined multiple hosts and network ranges, you can group them
+together like this:
+<div class="example">
+group myhosts myhost, myhost2<br />
+<br />
+group mystuff myhosts, mynetwork<br />
+<br />
+group somegroup myhost.fqdn.org, 128.12.23.45, 128.19.0.0/24<br />
+<br />
+group evil-hosts  a.spammer.net, a.cracker.net<br />
+group good-hosts  grandma, grandpa, localhost
+</div>
+</p>
+As you can see, groups can also be part of other groups.
+If you use groups in a clever way, it will be easy to maintain a ruleset.
+<p>
+</p>
+</div>
 
 <!-- the end -->
