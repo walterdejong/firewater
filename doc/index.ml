@@ -5,7 +5,7 @@
  <li><a href="#using">Using firewater</a></li>
  <li><a href="#syntax">Input file syntax</a></li>
  <ol>
-  <li><a href="#first">First an example</a></li>
+  <li><a href="#example_config">Example configuration</a></li>
   <li><a href="#iface">Interfaces</a></li>
   <li><a href="#network">Networks, ranges, hosts</a></li>
   <li><a href="#group">Logical groups</a></li>
@@ -126,5 +126,97 @@ the end of a line.
 The following subsections explain the keywords of the syntax of the input.
 </p>
 </div>
+
+<div>
+<h2 id="example_config">4.1 Example configuration</h2>
+<p>
+For those who learn by example, here is an example configuration:
+<div class="example">
+# this line is comment<br />
+<br />
+iface public   eth0<br />
+iface internal eth1<br />
+iface all-interfaces eth0,eth1,eth1.vlan10<br />
+<br />
+host myhost  myhostname.fqdn.org<br />
+host myhost2 127.0.1.18<br />
+<br />
+host google  74.125.79.99, 74.125.79.100, 74.125.79.101<br />
+<br />
+network internal-network  192.168.1.0/16<br />
+<br />
+group search-engines  google, www.yahoo.com, \<br />
+&nbsp; &nbsp; &nbsp;  www.altavista.com, www.bing.com, \<br />
+&nbsp; &nbsp; &nbsp;  sogou.com, soso.com, 127.123.12.34<br />
+<br />
+service myservice tcp 1234<br />
+<br />
+chain incoming default policy drop<br />
+chain outgoing default policy accept<br />
+<br />
+include /etc/firewater.d/anti_spoofing.rules<br />
+<br />
+<br />
+# it's just an example<br />
+allow tcp from any to myhost port ssh on public interface<br />
+<br />
+# it's just an example<br />
+deny tcp from search-engines to internal-network<br />
+<br />
+include /etc/firewater.d/reject_all.rules<br />
+<br />
+<br />
+ifdef TEST<br />
+  echo This is a test !!!<br />
+endif<br />
+<br />
+# inject iptables rules<br />
+verbatim<br />
+-I INPUT -i lo -j ACCEPT<br />
+-I FORWARD -o lo -j ACCEPT<br />
+-I FORWARD -i lo -j ACCEPT<br />
+end<br />
+</div>
+</p>
+</div>
+
+<div>
+<h2 id="iface">4.2 Interfaces</h2>
+<p>
+Firewalls, and thus firewater too, work with interfaces. An interface is the
+software representation of the hardware network port on your network card.
+[If you use virtual LANs (VLANs) or software drivers like PPP you may have
+additional interfaces that only exist in software.]
+You can see your interfaces with the <span class="smallcaps">UNIX</span>
+command <span class="cmd">ifconfig -a</span>.
+In Linux, you may also use the command <span class="cmd">ip addr show</span>.
+</p>
+<p>
+In firewater you can give these interfaces logical names using the
+<span class="system">iface</span> keyword. Moreover, you can group multiple
+interfaces together under a single <span class="system">iface</span> definition.
+<div class="example">
+iface public eth0<br />
+iface mgmt eth1<br />
+<br />
+iface internet eth0<br />
+iface internal eth1,eth2,eth2.vlan10,ppp0<br />
+<br />
+iface if-ext eth0<br />
+iface if-wlan eth1<br />
+iface if-test eth2<br />
+</div>
+</p>
+<p>
+For naming, you may choose whatever you see fit. It is good however to have
+an interface named <span class="system">public</span> because firewater comes
+with a set of anti-spoofing rules which work on an interface named &lsquo;public&rdquo;.
+</p>
+<p>
+It is not mandatory to use <span class="system">iface</span> definitions, but
+they make writing rules easier.
+</p>
+</div>
+
 
 <!-- the end -->
