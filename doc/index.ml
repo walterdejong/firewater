@@ -218,5 +218,33 @@ they make writing rules easier.
 </p>
 </div>
 
+<div>
+<h2 id="network">4.3 Networks, ranges, hosts</h2>
+<p>
+TCP/IP networking revolves around IP addresses. In firewater you can define
+logical names for IP adresses or for ranges of IP addresses.
+<div class="example">
+host myhost 123.124.12.34<br />
+host myhost2 myhostname.fqdn.org<br />
+<br />
+network localnet 10.0.0.0/8<br />
+<br />
+range classb 192.168.0.0/16
+</div>
+Note that the <span class="system">network</span> keyword is merely an alias for
+the <span class="system">range</span> keyword; they have the exact same
+meaning.
+</p>
+<p>
+Like with interfaces, it is not mandatory to use any of these, but they make
+maintaining your ruleset easier.
+</p>
+<p>
+IPv6 addresses are supported, just not very well tested.
+</p>
+</div>
+
+
+
 
 <!-- the end -->
