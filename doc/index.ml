@@ -451,4 +451,77 @@ block spoofing attempts, rules for logging to syslog, and more.
 </p>
 </div>
 
+<div>
+<h2 id="list">4.11 List of all keywords</h2>
+<p>
+<dl>
+<dt>allow</dt>
+<dd>Rule that allows traffic to go through</dd>
+
+<dt>chain</dt>
+<dd>Select current chain, optionally setting default policy</dd>
+
+<dt>define</dt>
+<dd>Define a new user-definable symbol, to be used with an
+<span class="system">ifdef</span> statement</dd>
+
+<dt>deny</dt>
+<dd>Rule that blocks traffic from going through</dd>
+
+<dt>echo</dt>
+<dd>Prints arguments to standard output</dd>
+
+<dt>else</dt>
+<dd>Conditional statement that evaluates to true if the preceding
+<span class="system">ifdef</span> or <span class="system">ifndef</span>
+was not true</dd>
+
+<dt>end</dt><dd>Signifies the end of a <span class="system">verbatim</span>
+block</dd>
+
+<dt>endif</dt>
+<dd>Signifies the end of a conditional block</dd>
+
+<dt>exit</dt>
+<dd>Terminate the translation, possibly with a given error code</dd>
+
+<dt>group</dt>
+<dd>Define a new group of hosts and/or network ranges</dd>
+
+<dt>host</dt>
+<dd>Define a new alias for a given host</dd>
+
+<dt>iface</dt>
+<dd>Define a new alias for an interface or collection of interfaces</dd>
+
+<dt>ifdef</dt>
+<dd>Include the following conditional block if the symbol is defined</dd>
+
+<dt>ifndef</dt>
+<dd>Include the following conditional block if the symbol is not defined</dd>
+
+<dt>include</dt>
+<dd>Include a file containing a firewater ruleset</dd>
+
+<dt>interface</dt>
+<dd>Alias for <span class="system">iface</span></dd>
+
+<dt>network</dt>
+<dd>Alias for <span class="system">range</span></dd>
+
+<dt>range</dt>
+<dd>Define a new alias for an IP address range</dd>
+
+<dt>serv</dt>
+<dd>Define a new alias for a network service</dd>
+
+<dt>service</dt>
+<dd>Alias for <span class="system">serv</span></dd>
+
+<dt>verbatim</dt>
+<dd>Copy block of text to standard output until the <span class="system">end</span> keyword is reached</dd>
+</dl>
+</p>
+</div>
+
 <!-- the end -->
