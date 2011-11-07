@@ -21,7 +21,7 @@
 </div>
 
 <div>
-<h2 id="whatis">What is firewater?</h2>
+<h2 id="whatis">1. What is firewater?</h2>
 <p>
 firewater is a(nother) hostbased firewall configuration tool.
 It offers a simple way to compose firewall policies from the command prompt,
@@ -42,7 +42,7 @@ systems in the future.
 </div>
 
 <div>
-<h2 id="install">Installing firewater</h2>
+<h2 id="install">2. Installing firewater</h2>
 <p>
 For installing the software, in short, do the following (as root):
 <div class="example">
@@ -72,7 +72,7 @@ in <span class="path">/etc/firewater.rules<span>. Then call:
 </div>
 
 <div>
-<h2 id="using">Using firewater</h2>
+<h2 id="using">3. Using firewater</h2>
 <p>
 firewater is an application that acts as a translator. It translates firewater
 input rules into statements that the native firewall can understand.
@@ -114,7 +114,7 @@ to test and commit (load) the new firewall.
 </div>
 
 <div>
-<h2 id="syntax">Input file syntax</h2>
+<h2 id="syntax">4. Input file syntax</h2>
 <p>
 As input, firewater accepts text files. A text file contains a firewater rule
 set. Firewater rule sets are line based, and every line starts with a keyword.
