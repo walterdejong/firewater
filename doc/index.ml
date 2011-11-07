@@ -11,7 +11,7 @@
   <li><a href="#group">Logical groups</a></li>
   <li><a href="#service">Services</a></li>
   <li><a href="#policy">Default policy</a></li>
-  <li><a href="#rule">Allow or deny</a></li>
+  <li><a href="#rule">Rules: allow or deny</a></li>
   <li><a href="#ifdef">Conditional statements: Using ifdefs</a></li>
   <li><a href="#echo">Injecting native firewall commands</a></li>
   <li><a href="#include">Standard includes</a></li>
@@ -334,5 +334,37 @@ chain incoming<br />
 Remember to set the current chain (!) before adding new rules.
 </p>
 </div>
+
+<div>
+<h2 id="rule">4.7 Rules: allow or deny</h2>
+<p>
+Firewalls are all about allowing traffic to go through or not. In a rule you
+specify where a packet comes from, what its destination may be, what service
+port it may use, on what interface it occurs, and whether it is allowed or
+denied.
+<div class="example">
+allow tcp from any to mywebserver port http on public interface<br />
+allow tcp from good-hosts to mynetwork port ssh on public interface<br />
+allow tcp from mgmt-lan to mgmt-lan on mgmt interface<br />
+<br />
+# 'any' is a wildcard, meaning '0.0.0.0/0'<br />
+deny from bad-hosts to any<br />
+<br />
+# with source port:<br />
+allow udp from server1 port 8000 to myhost<br />
+<br />
+# with port range:<br />
+allow tcp from grid-hosts to grid-server port globus-range on iface if-grid<br />
+<br />
+# with fqdn and numbers:<br />
+allow tcp from host1.servers.net to 123.123.12.34 port 80
+</div>
+Both the syntax &ldquo;<span class="system">on iface ...</span>&rdquo; and
+&ldquo;<span class="system">on ... interface</span>&rdquo; may be used.
+It is allowed to omit the interface, in which case the rule will apply to all
+interfaces.
+</p>
+</div>
+
 
 <!-- the end -->
