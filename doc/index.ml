@@ -250,7 +250,6 @@ IPv6 addresses are supported, just not very well tested.
 </p>
 </div>
 
-
 <div>
 <h2 id="group">4.4 Logical groups</h2>
 <p>
@@ -272,5 +271,33 @@ If you use groups in a clever way, it will be easy to maintain a ruleset.
 <p>
 </p>
 </div>
+
+<div>
+<h2 id="service">4.5 Services</h2>
+<p>
+Network services use well-known port numbers. For example, the SSH service
+uses TCP port 22. The SSH daemon listens on TCP port 22 for connections,
+and the SSH client connects to TCP port 22 to establish a connection.
+The port numbers for well-known services are typically listed in
+<span class="system">/etc/services</span>.
+However, it is perfectly possible to run a service on a port number that is
+not listed in <span class="system">/etc/services</span>. In firewater you can
+define your own local services so that you can write rules using the logical
+service names rather than having to use port numbers.
+<div class="example">
+service myhttp tcp 8080<br />
+service ssh-test tcp 222<br />
+service udp-test udp 10000<br />
+service globus-range tcp 20000-25000<br />
+</div>
+As you can see, in firewater it is possible to define a port range for
+a given service.
+</p>
+<p>
+There is no need to declare any services in firewater that already exist in
+<span class="system">/etc/services</span>.
+</p>
+</div>
+
 
 <!-- the end -->
