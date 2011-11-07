@@ -422,8 +422,7 @@ echo -A INPUT -m limit --limit 30/min -j LOG --log-prefix "iptables dropping: "<
 <br />
 verbatim<br />
 -I INPUT -i lo -j ACCEPT<br />
--I FORWARD -o lo -j ACCEPT<br />
--I FORWARD -i lo -j ACCEPT<br />
+-I OUTPUT -o lo -s 127.0.0.0/8 -j ACCEPT<br />
 end
 </div>
 This example shows how <span class="system">echo</span> and
@@ -432,5 +431,24 @@ This example shows how <span class="system">echo</span> and
 </p>
 </div>
 
+<div>
+<h2 id="include">4.10 Standard includes</h2>
+<p>
+Using the <span class="system">include</span> keyword, it is possible to
+include other ruleset files:
+<div class="example">
+include /etc/firewater.d/allow_loopback.rules<br />
+include /etc/firewater.d/anti_spoofing.rules<br />
+<br />
+...<br />
+<br />
+include /etc/firewater.d/logging.rules
+</div>
+A number of standard includes come with the package, they are situated
+under <span class="path">/etc/firewater.d/</span>. Provided are standard
+rules like for allowing traffic on the loopback interface, rules that
+block spoofing attempts, rules for logging to syslog, and more.
+</p>
+</div>
 
 <!-- the end -->
