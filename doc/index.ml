@@ -407,4 +407,30 @@ are treated as comments.
 </p>
 </div>
 
+<div>
+<h2 id="echo">4.9 Injecting native firewall commands</h2>
+<p>
+firewater translates <em>firewater</em> rules into statements for the target
+firewalling tool. The default target firewalling tool is Linux
+<span class="cmd">iptables</span>. firewater's command set is limited and
+<span class="cmd">iptables</span> has a very extensive command set.
+firewater offers two ways that allow you to inject native firewall commands
+into firewater's output: the <span class="system">echo</span> keyword and
+the <span class="system">verbatim</span> keyword.
+<div class="example">
+echo -A INPUT -m limit --limit 30/min -j LOG --log-prefix "iptables dropping: "<br />
+<br />
+verbatim<br />
+-I INPUT -i lo -j ACCEPT<br />
+-I FORWARD -o lo -j ACCEPT<br />
+-I FORWARD -i lo -j ACCEPT<br />
+end
+</div>
+This example shows how <span class="system">echo</span> and
+<span class="system">verbatim</span> can be used to inject explicit
+<span class="cmd">iptables</span> commands into firewater's output.
+</p>
+</div>
+
+
 <!-- the end -->
