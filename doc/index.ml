@@ -455,21 +455,23 @@ block spoofing attempts, rules for logging to syslog, and more.
 <h2 id="list">4.11 List of all keywords</h2>
 <p>
 <dl>
-<dt>allow</dt>
+<dt>allow [tcp|udp|ip|icmp|gre] [from SRC [port SERVICE]] [to DEST [port SERVICE]]
+[on [interface|iface] IFACE [interface]]</dt>
 <dd>Rule that allows traffic to go through</dd>
 
-<dt>chain</dt>
+<dt>chain incoming|outgoing|forwarding [policy accept|deny|allow|drop]</dt>
 <dd>Select current chain, optionally setting default policy</dd>
 
-<dt>define</dt>
+<dt>define SYMBOL</dt>
 <dd>Define a new user-definable symbol, to be used with an
 <span class="system">ifdef</span> statement</dd>
 
-<dt>deny</dt>
+<dt>deny [tcp|udp|ip|icmp|gre] [from SRC [port SERVICE]] [to DEST [port SERVICE]]
+[on [interface|iface] IFACE [interface]]</dt>
 <dd>Rule that blocks traffic from going through</dd>
 
-<dt>echo</dt>
-<dd>Prints arguments to standard output</dd>
+<dt>echo LINE</dt>
+<dd>Prints a line of text to standard output</dd>
 
 <dt>else</dt>
 <dd>Conditional statement that evaluates to true if the preceding
@@ -482,40 +484,40 @@ block</dd>
 <dt>endif</dt>
 <dd>Signifies the end of a conditional block</dd>
 
-<dt>exit</dt>
-<dd>Terminate the translation, possibly with a given error code</dd>
+<dt>exit [CODE]</dt>
+<dd>Terminate the translation, possibly with a given exit code</dd>
 
-<dt>group</dt>
+<dt>group ALIAS MEMBER [, ...]</dt>
 <dd>Define a new group of hosts and/or network ranges</dd>
 
-<dt>host</dt>
+<dt>host ALIAS IPADDR|FQDN</dt>
 <dd>Define a new alias for a given host</dd>
 
-<dt>iface</dt>
+<dt>iface ALIAS SYSTEM_INTERFACE_NAME [, ...]</dt>
 <dd>Define a new alias for an interface or collection of interfaces</dd>
 
-<dt>ifdef</dt>
+<dt>ifdef SYMBOL</dt>
 <dd>Include the following conditional block if the symbol is defined</dd>
 
-<dt>ifndef</dt>
+<dt>ifndef SYMBOL</dt>
 <dd>Include the following conditional block if the symbol is not defined</dd>
 
-<dt>include</dt>
+<dt>include FILENAME</dt>
 <dd>Include a file containing a firewater ruleset</dd>
 
-<dt>interface</dt>
+<dt>interface ALIAS SYSTEM_INTERFACE_NAME [, ...]</dt>
 <dd>Alias for <span class="system">iface</span></dd>
 
-<dt>network</dt>
+<dt>network ALIAS ADDRESS_RANGE</dt>
 <dd>Alias for <span class="system">range</span></dd>
 
-<dt>range</dt>
+<dt>range ALIAS ADDRESS_RANGE</dt>
 <dd>Define a new alias for an IP address range</dd>
 
-<dt>serv</dt>
+<dt>serv ALIAS tcp|udp PORT</dt>
 <dd>Define a new alias for a network service</dd>
 
-<dt>service</dt>
+<dt>service ALIAS tcp|udp PORT</dt>
 <dd>Alias for <span class="system">serv</span></dd>
 
 <dt>verbatim</dt>
