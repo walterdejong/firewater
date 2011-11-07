@@ -366,5 +366,45 @@ interfaces.
 </p>
 </div>
 
+<div>
+<h2 id="ifdef">4.8 Conditional statements: Using ifdefs</h2>
+<p>
+firewater has a mechanism for letting you to choose whether to include a block
+of rules or not. This is convenient for a number of reasons:
+<ul>
+ <li>For testing you want to enable some rules;</li>
+ <li>You temporarily want to disable some rules;</li>
+ <li>In a group of machines, all but one have the same firewall config;</li>
+ <li>In a group of machines, some have different interfaces;</li>
+ <li>The services you offer, and thus your firewalling stanza, switches regularly</li>
+</ul>
+firewater uses user-definable symbols and <span class="system">ifdef</span>s
+to facilitate this. The symbols are passed on the command-line using the
+<span class="system">-D</span> parameter.
+<div class="example">
+$ firewater -DTEST -DWEBSERVER firewater.rules<br />
+<br />
+<br />
+ifdef TEST<br />
+&nbsp; echo this is a test!<br />
+endif<br />
+<br />
+ifdef WEBSERVER<br />
+&nbsp; allow tcp from any to any port http<br />
+&nbsp; allow tcp from any to any port https<br />
+endif<br />
+<br />
+ifndef EXTRA_NIC<br />
+&nbsp; iface public eth0<br />
+else<br />
+&nbsp; iface public eth1<br />
+endif
+</div>
+<span class="system">ifdef</span>s may be nested. Note that unlike in the
+C programming language, <span class="system">ifdef</span> statements do not
+start with a <span class="system">#</span>-token because in firewater those
+are treated as comments.
+</p>
+</div>
 
 <!-- the end -->
