@@ -71,4 +71,60 @@ in <span class="path">/etc/firewater.rules<span>. Then call:
 </p>
 </div>
 
+<div>
+<h2 id="using">Using firewater</h2>
+<p>
+firewater is an application that acts as a translator. It translates firewater
+input rules into statements that the native firewall can understand.
+For example, for Linux this means that firewater rules are translated into
+<span class="cmd">iptables</span> statements. [In theory, firewater can
+translate for other targets as well, but this is currently not implemented.]
+</p>
+<p>
+Because firewater is only a translator, it does not directly act on your
+active firewall. This allows you to test and tweak your configuration
+before committing and loading the new rules into the firewall. firewater
+comes with an <span class="system">init.d</span> script that makes it
+easy to reload Linux's <span class="cmd">iptables</span> firewall with
+your firewater configuration.
+</p>
+<p>
+An example of running firewater:
+<div class="example">
+$ /usr/local/bin/firewater --verbose -DTEST /etc/firewater.rules | less
+</div>
+In this example, the configuration in <span class="path">/etc/firewater.rules</span>
+is translated. The output is piped through a pager
+(named <span class="cmd">less</span>). In verbose output mode, firewater
+will display the source rules in comments in between the translated output
+lines. Lastly, a user-defined symbol <span class="system">TEST</span> is
+defined; the input rules may check for the existence of this define and
+act upon this.
+</p>
+<p>
+A second example of how to use firewater:
+<div class="example">
+# service firewater test<br />
+# service firewater commit
+</div>
+In this example, the <span class="system">root</span> user invokes the
+firewater wrapper script under <span class="path">/etc/init.d/</span>
+to test and commit (load) the new firewall.
+</p>
+</div>
+
+<div>
+<h2 id="syntax">Input file syntax</h2>
+<p>
+As input, firewater accepts text files. A text file contains a firewater rule
+set. Firewater rule sets are line based, and every line starts with a keyword.
+Comments are marked with a &lsquo;<span class="system">#</span>&rsquo; hash token.
+Comments may be started at the beginning of a line, but can also be added to
+the end of a line.
+</p>
+<p>
+The following subsections explain the keywords of the syntax of the input.
+</p>
+</div>
+
 <!-- the end -->
