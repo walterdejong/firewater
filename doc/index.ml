@@ -299,5 +299,40 @@ There is no need to declare any services in firewater that already exist in
 </p>
 </div>
 
+<div>
+<h2 id="policy">4.6 Default policy</h2>
+<p>
+Firewalls deal with packets of network traffic coming into your computer via
+the network interface and going out of your computer through the network
+interface again. You set a default policy of what to do with a packet,
+do you want to accept it or do you want to drop it? Dropping means denying,
+accepting means allowing it to go through. The default policy must be set
+(only once), the ruleset will act like an amendment to the default policy.
+So it is okay to block everyone (default policy drop) and later add a
+rule saying that it's okay to let your mother in.
+</p>
+<p>
+The <span class="system">incoming</span> and <span class="system">outgoing</span>
+components are called <em>chains</em>. Linux has a forwarding chain that is used
+for routing. Any rules that you define operate on one (and exactly one) of these
+chains. It is important to tell firewater what chain your rules should work on.
+You can do so using the same <span class="system">chain</span> keyword as for
+setting the default policy.
+</p>
+<p>
+Example for a setup that by default blocks all (presumably evil) machines
+from trying to connect to your computer, but allows you to freely use the
+internet:
+<div class="example">
+chain incoming policy drop<br />
+chain outgoing policy accept<br />
+chain forwarding policy accept<br />
+<br />
+# very important: set the current chain to incoming<br />
+chain incoming<br />
+</div>
+Remember to set the current chain (!) before adding new rules.
+</p>
+</div>
 
 <!-- the end -->
