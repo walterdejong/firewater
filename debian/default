@@ -1,0 +1,66 @@
+#
+#	/etc/default/firewater
+#
+
+ENABLED="yes"
+
+# ruleset is usually only one file, but may be multiple files in a row
+RULESET="/etc/firewater.rules"
+
+# this file is the compiled ruleset that is loaded into iptables
+# this file persists across reboots
+# use 'firewater commit' to recreate this file
+COMPILED_RULESET="/etc/iptables.saved"
+
+#
+# you can use EXTRA_OPTIONS to specify things like -DTEST
+#
+EXTRA_OPTIONS=""
+
+INCLUDE_DIR="/etc/firewater.d"
+
+#
+# do some kernel settings (or leave them untouched)
+# The settings are rp_filter, log_martians, and tcp_syncookies (see below)
+#
+LINUX_KERNEL_SETTINGS="yes"
+
+#
+# set reverse path filtering
+# This is really a routing thing, but helps network security too
+#
+# Values: 0 off
+#         1 allow asymmetric routes
+#         2 full (or 'strict')
+#
+# If this setting gives you problems, it's one of these:
+#  - you have a weird (or bad) networking/routing setup
+#  - a badly configured service on the network connects to a wrong
+#    address or interface
+#  - maybe asymmetric routing is perfectly normal in your network
+#
+RP_FILTER=2
+
+#
+# log packets with impossible addresses
+#
+# Values: 0 no
+#         1 yes
+#
+# Note: If this gives you problems, it's probable that a device on your
+#       network has a wrongly configured IP address
+#
+LOG_MARTIANS=1
+
+#
+# send out syn cookies when the syn backlog queue of a socket overflows
+# This is to prevent against the "syn flood attack"
+#
+# Values: 0 no
+#         1 yes
+#
+TCP_SYNCOOKIES=1
+
+
+# EOB
+

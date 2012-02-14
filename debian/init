@@ -1,0 +1,100 @@
+#! /bin/sh
+#
+#	/etc/init.d/firewater
+#
+### BEGIN INIT INFO
+# Provides: firewater
+# Required-Start: $network
+# Required-Stop: $network
+# X-UnitedLinux-Should-Start:
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Description: Start the firewater hostbased firewall
+### END INIT INFO
+#
+#	Note: this init.d/ script assumes Linux platform and iptables firewall
+#
+
+PATH="/bin:/usr/bin:/sbin:/usr/sbin"
+
+DEFAULTS="/etc/default/firewater"
+
+if [ -r $DEFAULTS ]
+then
+	. $DEFAULTS
+else
+	echo "ERROR: $DEFAULTS not found, aborting"
+	exit 1
+fi
+
+if [ ! -r "$RULESET" ]
+then
+	echo "ERROR: ruleset $RULESET not found, aborting"
+	exit 1
+fi
+
+if [ ! -r "$COMPILED_RULESET" ]
+then
+	echo "ERROR: compiled ruleset $COMPILED_RULESET not found, aborting"
+	exit 1
+fi
+
+# change linux kernel settings
+if [ "LINUX_KERNEL_SETTINGS" = "yes" ]
+then
+	echo $RP_FILTER >/proc/sys/net/ipv4/conf/all/rp_filter
+	echo $LOG_MARTIANS >/proc/sys/net/ipv4/conf/all/log_martians
+	echo $TCP_SYNCOOKIES >/proc/sys/net/ipv4/tcp_syncookies
+fi
+
+
+case "$1" in
+	start)
+		if [ "$ENABLED" != "yes" ]
+		then
+			echo "firewater is disabled"
+			exit 0
+		fi
+
+		echo "Starting firewater hostbased firewall ..."
+		iptables-restore < $COMPILED_RULESET
+		;;
+	
+	stop)
+		echo "Stopping firewater hostbased firewall ..."
+		iptables -F
+		iptables -P INPUT ACCEPT
+		iptables -P OUTPUT ACCEPT
+		iptables -P FORWARD ACCEPT
+		;;
+	
+	restart|reload)
+		$0 start
+		;;
+	
+	status)
+		iptables -L -n
+		;;
+
+	test)
+		firewater $EXTRA_OPTIONS -v $RULESET
+		echo
+		echo "warning: your changes have not been committed"
+		echo "warning: use '$0 commit' to save the ruleset"
+		echo
+		;;
+	
+	commit)
+		firewater $EXTRA_OPTIONS -v $RULESET >$COMPILED_RULESET
+		$0 start
+		;;
+
+	*)
+		echo "usage: `basename $0` [start|stop|restart|reload|status|test|commit]"
+		exit 1
+		;;
+esac
+
+
+# EOB
+
