@@ -1,3 +1,15 @@
+firewater (1.0-1) unstable; urgency=low
+
+  * Fixed the package that firewater will not start during installation
+
+ -- Dennis Stam <dennis.stam@sara.nl>  Thu, 02 Aug 2012 11:48:20 +0200
+
+firewater (1.0) unstable; urgency=low
+
+  * New upstream release
+
+ -- Dennis Stam <dennis.stam@sara.nl>  Wed, 01 Aug 2012 15:32:33 +0200
+
 firewater (0.6) unstable; urgency=low
 
   * Initial release. 

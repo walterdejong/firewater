@@ -9,6 +9,9 @@ DEB_PYTHON_SETUP_CMD := setup.py
 DEB_PYTHON_COMPRESS_EXCLUDE := .pyc
 DEB_STRIP_EXCLUDE := .pyc
 
+override_dh_installinit:
+	dh_installinit --noscript
+
 binary-post-install/firewater::
 	touch debian/firewater/etc/iptables.saved
 	echo "# Add your rules here\n\n"  > debian/firewater/etc/firewater.rules
