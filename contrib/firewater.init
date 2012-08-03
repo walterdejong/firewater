@@ -78,15 +78,21 @@ case "$1" in
 
 	test)
 		firewater $EXTRA_OPTIONS -v $RULESET
-		echo
-		echo "warning: your changes have not been committed"
-		echo "warning: use '$0 commit' to save the ruleset"
-		echo
+		if [ $? -eq 0 ]
+		then
+			echo
+			echo "warning: your changes have not been committed"
+			echo "warning: use '$0 commit' to save the ruleset"
+			echo
+		fi
 		;;
 	
 	commit)
 		firewater $EXTRA_OPTIONS -v $RULESET >$COMPILED_RULESET
-		$0 start
+		if [ $? -eq 0 ]
+		then
+			$0 start
+		fi
 		;;
 
 	*)
