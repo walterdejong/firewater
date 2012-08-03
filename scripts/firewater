@@ -179,11 +179,13 @@ if __name__ == '__main__':
 			pass
 		else:
 			print ioerr
+			sys.exit(127)
 
 	except KeyboardInterrupt:		# user pressed Ctrl-C
-		pass
+		sys.exit(127)
 	
 	except RuntimeError, msg:
 		print 'error:', msg
+		sys.exit(1)
 
 # EOB
