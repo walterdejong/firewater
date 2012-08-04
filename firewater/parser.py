@@ -191,6 +191,20 @@ class Parser:
 			bytecode.set_comment(self.filename, self.lineno, self.full_line)
 			firewater.globals.BYTECODE.append(bytecode)
 	
+	def missing_comma(self, a_list):
+		'''lists must be comma-separated, so if this function returns != None
+		then it's a syntax error: missing comma after element'''
+		
+		n = 0
+		for elem in a_list:
+			arr = string.split(elem)
+			if len(arr) > 1:
+				return arr[0]
+			
+			n += 1
+		
+		return None
+
 	### parser keywords ###
 	
 	def parse_include(self):
@@ -226,6 +240,10 @@ class Parser:
 		
 		iface_list = string.join(arr[2:])
 		iface_list = string.split(iface_list, ',')
+		
+		elem = self.missing_comma(iface_list)
+		if elem != None:
+			raise ParseError("%s: missing comma after '%s'" % (self, elem))
 		
 		if alias in iface_list:
 			raise ParseError("%s: interface %s references back to itself" % (self, alias))
@@ -279,6 +297,10 @@ class Parser:
 		host_list = string.replace(host_list, ' ', '')
 		host_list = string.replace(host_list, ',,', ',')
 		host_list = string.split(host_list, ',')
+		
+		elem = self.missing_comma(host_list)
+		if elem != None:
+			raise ParseError("%s: missing comma after '%s'" % (self, elem))
 		
 		if alias in host_list:
 			raise ParseError("%s: host %s references back to itself" % (self, alias))
@@ -354,6 +376,10 @@ class Parser:
 		ranges_list = string.replace(ranges_list, ',,', ',')
 		ranges_list = string.split(ranges_list, ',')
 		
+		elem = self.missing_comma(ranges_list)
+		if elem != None:
+			raise ParseError("%s: missing comma after '%s'" % (self, elem))
+		
 		if alias in ranges_list:
 			raise ParseError("%s: %s %s references back to itself" % (self, arr[0], alias))
 		
@@ -415,6 +441,10 @@ class Parser:
 		group_list = string.replace(group_list, ' ', '')
 		group_list = string.replace(group_list, ',,', ',')
 		group_list = string.split(group_list, ',')
+		
+		elem = self.missing_comma(group_list)
+		if elem != None:
+			raise ParseError("%s: missing comma after '%s'" % (self, elem))
 		
 		if alias in group_list:
 			raise ParseError("%s: range %s references back to itself" % (self, alias))
