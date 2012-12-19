@@ -67,6 +67,9 @@ class ByteCode:
 		self.filename = filename
 		self.lineno = lineno
 		self.comment = comment
+
+		if len(self.comment) > 200:
+			self.comment = self.comment[:200] + " ... (long line truncated)"
 	
 	def set_exit(self, filename, lineno, exit_code):
 		self.type = ByteCode.TYPE_EXIT
