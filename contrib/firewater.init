@@ -15,7 +15,8 @@
 #	Note: this init.d/ script assumes Linux platform and iptables firewall
 #
 
-PATH="/bin:/usr/bin:/sbin:/usr/sbin"
+PATH="/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
+PROG="firewater"
 
 DEFAULTS="/etc/default/firewater"
 
@@ -23,19 +24,17 @@ if [ -r $DEFAULTS ]
 then
 	. $DEFAULTS
 else
-	echo "ERROR: $DEFAULTS not found, aborting"
+	echo "$PROG: ERROR: $DEFAULTS not found, aborting"
+	echo "$PROG: Your system is currently NOT protected by firewater"
+	echo
 	exit 1
 fi
 
 if [ ! -r "$RULESET" ]
 then
-	echo "ERROR: ruleset $RULESET not found, aborting"
-	exit 1
-fi
-
-if [ ! -r "$COMPILED_RULESET" ]
-then
-	echo "ERROR: compiled ruleset $COMPILED_RULESET not found, aborting"
+	echo "$PROG: ERROR: ruleset $RULESET not found, aborting"
+	echo "$PROG: Your system is currently NOT protected by firewater"
+	echo
 	exit 1
 fi
 
@@ -56,8 +55,20 @@ case "$1" in
 			exit 0
 		fi
 
-		echo "Starting firewater hostbased firewall ..."
-		iptables-restore < $COMPILED_RULESET
+		if [ -r "$COMPILED_RULESET" ]
+		then
+			echo "Starting firewater hostbased firewall ..."
+			iptables-restore < $COMPILED_RULESET
+		else
+			echo "$PROG: WARNING: compiled ruleset $COMPILED_RULESET not found"
+			echo "$PROG: Your system is currently NOT protected by firewater"
+			echo "$PROG:"
+			echo "$PROG: To compile the ruleset, you should run"
+			echo "$PROG:"
+			echo "$PROG:    $0 test"
+			echo "$PROG:    $0 commit"
+			echo
+		fi
 		;;
 	
 	stop)
@@ -100,7 +111,6 @@ case "$1" in
 		exit 1
 		;;
 esac
-
 
 # EOB
 
