@@ -41,7 +41,15 @@ setup(
 	
 	scripts = ['scripts/firewater'],
 	data_files = [
-		( '/etc/firewater.d', [ 'firewater.d/anti_spoofing.rules' ]),
+		( '/etc/firewater.d', [
+		'firewater.d/allow_loopback.rules',
+		'firewater.d/allow_established.rules',
+		'firewater.d/drop_invalid.rules',
+		'firewater.d/anti_spoofing.rules',
+		'firewater.d/anti_smurf.rules',
+		'firewater.d/reject_all.rules',
+		'firewater.d/logging.rules'
+		]),
 	],
 )
 
