@@ -28,3 +28,7 @@ and  /etc/init.d/firewater commit
 
 On Debian systems you may create a package by using debian/rules
 
+
+For more information, please consult the documentation at:
+http://www.heiho.net/software/firewater/doc/index.html
+
