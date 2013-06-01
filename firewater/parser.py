@@ -114,7 +114,7 @@ class Parser:
 			if not tmp_line:
 				return False
 			
-			self.lineno = self.lineno + 1
+			self.lineno += 1
 			
 			if self.in_verbatim:
 				# copy verbatim until the statement 'end verbatim' is reached
@@ -157,7 +157,7 @@ class Parser:
 		
 		if not self.keyword:
 			raise ParseError('%s: no keyword set; invalid parser state' % self)
-			self.errors = self.errors + 1
+			self.errors += 1
 			return 1
 		
 		if not self.ifdef_stack[0]:
@@ -170,14 +170,14 @@ class Parser:
 			func = getattr(self, 'parse_%s' % self.keyword)
 		except AttributeError:
 			stderr("%s: unknown keyword '%s'" % (self, self.keyword))
-			self.errors = self.errors + 1
+			self.errors += 1
 			return 1
 		
 		try:
 			func()
 		except ParseError, (parse_error):
 			parse_error.perror()
-			self.errors = self.errors + 1
+			self.errors += 1
 			return 1
 		
 		return 0
@@ -1074,7 +1074,7 @@ def read_input_file(filename):	# throws IOError
 	
 	if len(parser.ifdef_stack) > 1:
 		ParseError("%s: missing 'endif' statement" % parser).perror()
-		errors = errors + 1
+		errors += 1
 	
 	parser.close()
 	errors = errors + parser.errors
