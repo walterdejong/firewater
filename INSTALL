@@ -28,6 +28,11 @@ and  /etc/init.d/firewater commit
 
 On Debian systems you may create a package by using debian/rules
 
+On Redhat, CentOS, SUSE and other RPM based distributions you may
+create a package by using distutils. You can create the package by
+running the following command:
+
+  python ./setup.py bdist_rpm
 
 For more information, please consult the documentation at:
 http://www.heiho.net/software/firewater/doc/index.html
