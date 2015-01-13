@@ -9,10 +9,19 @@
 #   License.
 
 import distutils.sysconfig
+import os,shutil
 
 from distutils.core import setup
 
 import firewater.globals
+
+if not os.path.exists('build/etc/init.d'):
+	os.makedirs('build/etc/init.d')
+shutil.copyfile('contrib/firewater.init', 'build/etc/init.d/firewater')
+
+if not os.path.exists('build/etc/default'):
+	os.makedirs('build/etc/default')
+shutil.copyfile('contrib/firewater.default', 'build/etc/default/firewater')
 
 setup(
 	name = 'firewater',
@@ -50,6 +59,8 @@ setup(
 		'firewater.d/reject_all.rules',
 		'firewater.d/logging.rules'
 		]),
+		('/etc/init.d', ['build/etc/init.d/firewater']),
+		('/etc/default', ['build/etc/default/firewater'])
 	],
 )
 

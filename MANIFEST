@@ -1,5 +1,7 @@
 README
 setup.py
+contrib/firewater.init
+contrib/firewater.default
 firewater/__init__.py
 firewater/bytecode.py
 firewater/globals.py
