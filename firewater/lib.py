@@ -1,5 +1,5 @@
 #
-#	firewater/lib.py	WJ111
+#   firewater/lib.py    WJ111
 #
 #   firewater by Walter de Jong <walter@heiho.net> (c) 2012
 #
@@ -14,25 +14,25 @@ import sys
 
 
 def stderr(line):
-	sys.stderr.write(line + '\n')
+    sys.stderr.write(line + '\n')
 
 
 def debug(line):
-	if firewater.globals.DEBUG:
-		print 'DEBUG:', line
+    if firewater.globals.DEBUG:
+        print 'DEBUG:', line
 
 
 def fatal(line):
-	stderr('ERROR: ' + line)
-	sys.exit(127)
+    stderr('ERROR: ' + line)
+    sys.exit(127)
 
 
 def warning(line):
-	stderr('warning: ' + line)
+    stderr('warning: ' + line)
 
 
 def error(line):
-	stderr('error: ' + line)
+    stderr('error: ' + line)
 
 
 # EOB

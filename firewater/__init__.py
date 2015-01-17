@@ -1,5 +1,5 @@
 #
-#	firewater/__init__.py	WJ111
+#   firewater/__init__.py   WJ111
 #
 #   firewater by Walter de Jong <walter@heiho.net> (c) 2012
 #

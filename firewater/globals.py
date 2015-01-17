@@ -1,5 +1,5 @@
 #
-#	firewater/globals.py	WJ111
+#   firewater/globals.py    WJ111
 #
 #   firewater by Walter de Jong <walter@heiho.net> (c) 2012
 #
@@ -17,8 +17,8 @@ VERBOSE = False
 INTERFACES = { 'all' : [] }
 
 # dictionary with host and network range aliases
-HOSTS = { 'any' : [ '0.0.0.0/0' ],
-	'everybody' : [ '0.0.0.0/0' ] }
+HOSTS = {'any': ['0.0.0.0/0'],
+         'everybody': ['0.0.0.0/0']}
 
 # dictionary with user-defined ServiceObjects
 SERVICES = {}
