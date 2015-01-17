@@ -17,12 +17,18 @@
 # and it will just work (magic trick with getattr(self, functionname))
 #
 
+import re
+
 import firewater.globals
 import firewater.resolv
 import firewater.service
 import firewater.bytecode
 
 from firewater.lib import debug, stderr
+
+
+REGEX_NUMERIC = re.compile(r'(\d+)$')
+REGEX_PORT_RANGE = re.compile(r'(\d+)[:-](\d+)$')
 
 
 class ParseError(Exception):
@@ -562,99 +568,50 @@ class Parser(object):
         if len(arr) < 3:
             raise ParseError("%s: missing service or port number" % self)
 
-        if '0123456789'.find(arr[2][0]) > -1:
-            # treat as port number or range
-            if arr[2].find('-') > -1:
-                # treat as port range
-                port_range = arr[2]
+        # parse port range or number, or alias, or service name
+        m = REGEX_PORT_RANGE.match(arr[2])
+        if m is not None:
+            # it's a port range
+            port_range = arr[2]
+            obj.port = int(m.groups()[0])
+            if obj.port < 0 or obj.port > 65535:
+                raise ParseError("%s: invalid port range '%s'" %
+                                 (self, port_range))
 
-                port_arr = port_range.split('-')
-                if len(port_arr) != 2:
-                    raise ParseError("%s: invalid port range '%s'" %
-                                     (self, port_range))
-
-                try:
-                    obj.port = int(port_arr[0])
-                except ValueError:
-                    raise ParseError("%s: invalid port range '%s'" %
-                                     (self, port_range))
-
-                try:
-                    obj.endport = int(port_arr[1])
-                except ValueError:
-                    raise ParseError("%s: invalid port range '%s'" %
-                                     (self, port_range))
-
-                if obj.port < -1 or obj.port > 65535:
-                    raise ParseError("%s: invalid port range '%s'" %
-                                     (self, port_range))
-
-                if (obj.endport < -1 or obj.endport > 65535 or
-                    obj.endport < obj.port):
-                    raise ParseError("%s: invalid port range '%s'" %
-                                     (self, port_range))
-
-            elif arr[2].find(':') > -1:
-                # treat as port range (same code as above, split by ':')
-                # (yeah, stupid, I know)
-                port_range = arr[2]
-
-                port_arr = port_range.split(':')
-                if len(port_arr) != 2:
-                    raise ParseError("%s: invalid port range '%s'" %
-                                     (self, port_range))
-
-                try:
-                    obj.port = int(port_arr[0])
-                except ValueError:
-                    raise ParseError("%s: invalid port range '%s'" %
-                                     (self, port_range))
-
-                try:
-                    obj.endport = int(port_arr[1])
-                except ValueError:
-                    raise ParseError("%s: invalid port range '%s'" %
-                                     (self, port_range))
-
-                if obj.port < -1 or obj.port > 65535:
-                    raise ParseError("%s: invalid port range '%s'" %
-                                     (self, port_range))
-
-                if (obj.endport < -1 or obj.endport > 65535 or
-                    obj.endport < obj.port):
-                    raise ParseError("%s: invalid port range '%s'" %
-                                     (self, port_range))
-
-            else:
-                # single port number
-                try:
-                    obj.port = int(arr[2])
-                except ValueError:
-                    raise ParseError("%s: invalid port number '%s'" %
-                                     (self, arr[2]))
-
+            obj.endport = int(m.groups()[1])
+            if obj.endport < 0 or obj.endport > 65535:
+                raise ParseError("%s: invalid port range '%s'" %
+                                 (self, port_range))
         else:
-            if arr[2] == alias:
-                raise ParseError("%s: service %s references back to itself" %
-                                 self)
-
-            if firewater.globals.SERVICES.has_key(arr[2]):
-                obj2 = firewater.globals.SERVICES[arr[2]]
-
-                # copy the other service object
-                if not obj.proto:
-                    obj.proto = obj2.proto
-
-                obj.port = obj2.port
-                obj.endport = obj2.endport
-                obj.iface = obj2.iface
-
+            m = REGEX_NUMERIC.match(arr[2])
+            if m is not None:
+                # it's a single port number
+                obj.port = int(arr[2])
+                if obj.port < 0 or obj.port > 65535:
+                    raise ParseError("%s: invalid port number '%d'" %
+                                     (self, obj.port))
             else:
-                # treat as system service name
-                obj.port = firewater.service.servbyname(arr[2])
-                if obj.port is None:
-                    raise ParseError("%s: no such service '%s'" % (self,
-                                                                   arr[2]))
+                # it's a string
+                if arr[2] == alias:
+                    raise ParseError("%s: service %s references back to "
+                                     "itself" % self)
+
+                if firewater.globals.SERVICES.has_key(arr[2]):
+                    obj2 = firewater.globals.SERVICES[arr[2]]
+
+                    # copy the other service object
+                    if not obj.proto:
+                        obj.proto = obj2.proto
+
+                    obj.port = obj2.port
+                    obj.endport = obj2.endport
+                    obj.iface = obj2.iface
+                else:
+                    # treat as system service name
+                    obj.port = firewater.service.servbyname(arr[2])
+                    if obj.port is None:
+                        raise ParseError("%s: no such service '%s'" %
+                                         (self, arr[2]))
 
         if len(arr) > 3:
             if arr[3] in ('iface', 'interface'):
@@ -673,7 +630,6 @@ class Parser(object):
                                      (self, arr[0]))
 
         debug('new service: %s:%s' % (alias, obj))
-
         firewater.globals.SERVICES[alias] = obj
 
     def parse_chain(self):
