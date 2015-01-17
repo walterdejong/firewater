@@ -26,14 +26,14 @@ shutil.copyfile('contrib/firewater.default', 'build/etc/default/firewater')
 setup(
     name = 'firewater',
     version = firewater.globals.VERSION,
-    
+
     description = 'firewater hostbased firewall configuration tool',
     long_description = 'firewater hostbased firewall configuration tool',
     author = 'Walter de Jong',
     author_email = 'walter@heiho.net',
     url = 'http://www.heiho.net/software/',
     license = 'GPLv3',
-    
+
     classifiers = [
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
@@ -44,10 +44,10 @@ setup(
         'Programming Language :: Python',
         'Topic :: System :: Networking :: Firewalls'
     ],
-    
+
     package_dir={'firewater': 'firewater'},
     packages = ['firewater'],
-    
+
     scripts = ['scripts/firewater'],
     data_files = [('/etc/firewater.d', [
         'firewater.d/allow_loopback.rules',
