@@ -1,5 +1,5 @@
 #
-#	firewater/globals.py	WJ111
+#   firewater/globals.py    WJ111
 #
 #   firewater by Walter de Jong <walter@heiho.net> (c) 2012
 #
@@ -7,6 +7,8 @@
 #   firewater is distributed under terms described in the GNU General Public
 #   License.
 #
+
+'''firewater global variables'''
 
 VERSION = '1.2-beta'
 
@@ -17,8 +19,8 @@ VERBOSE = False
 INTERFACES = { 'all' : [] }
 
 # dictionary with host and network range aliases
-HOSTS = { 'any' : [ '0.0.0.0/0' ],
-	'everybody' : [ '0.0.0.0/0' ] }
+HOSTS = {'any': ['0.0.0.0/0'],
+         'everybody': ['0.0.0.0/0']}
 
 # dictionary with user-defined ServiceObjects
 SERVICES = {}

@@ -1,5 +1,5 @@
 #
-#	firewater/lib.py	WJ111
+#   firewater/lib.py    WJ111
 #
 #   firewater by Walter de Jong <walter@heiho.net> (c) 2012
 #
@@ -8,32 +8,42 @@
 #   License.
 #
 
+'''utility functions'''
+
 import firewater.globals
 
 import sys
 
 
 def stderr(line):
-	sys.stderr.write(line + '\n')
+    '''print message on stderr'''
+
+    sys.stderr.write(line + '\n')
 
 
 def debug(line):
-	if firewater.globals.DEBUG:
-		print 'DEBUG:', line
+    '''print debug message'''
+
+    if firewater.globals.DEBUG:
+        print 'DEBUG:', line
 
 
 def fatal(line):
-	stderr('ERROR: ' + line)
-	sys.exit(127)
+    '''print error message and exit'''
+
+    stderr('ERROR: ' + line)
+    sys.exit(127)
 
 
 def warning(line):
-	stderr('warning: ' + line)
+    '''print warning message'''
+
+    stderr('warning: ' + line)
 
 
 def error(line):
-	stderr('error: ' + line)
+    '''print error message'''
 
+    stderr('error: ' + line)
 
 # EOB
-
