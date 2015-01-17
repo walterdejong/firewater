@@ -10,13 +10,13 @@
 
 '''firewater global variables'''
 
-VERSION = '1.2-beta'
+VERSION = '1.3-beta'
 
 DEBUG = False
 VERBOSE = False
 
 # dictionary holding interface aliases and groups
-INTERFACES = { 'all' : [] }
+INTERFACES = {'all': []}
 
 # dictionary with host and network range aliases
 HOSTS = {'any': ['0.0.0.0/0'],
