@@ -8,21 +8,28 @@
 #   License.
 #
 
+'''firewater output generator for iptables'''
 
 CURRENT_CHAIN = None
 
 
 def begin():
+    '''output header lines'''
+
     print '*filter'
 
 
 def end():
+    '''output trailing lines'''
+
     print 'COMMIT'
 
 
 def generate_rule(bytecode):
+    '''generate output for bytecode'''
+
     if not CURRENT_CHAIN:
-        raise RuntimeError, 'CURRENT_CHAIN is not set'
+        raise RuntimeError('CURRENT_CHAIN is not set')
 
     chain = ''
     if CURRENT_CHAIN == 'incoming':
@@ -48,7 +55,7 @@ def generate_rule(bytecode):
             iface_arg = ' -i %s' % bytecode.iface
 
         else:
-            raise RuntimeError, 'unknown chain %s' % CURRENT_CHAIN
+            raise RuntimeError('unknown chain %s' % CURRENT_CHAIN)
 
     proto_arg = ''
     if bytecode.proto:
@@ -57,20 +64,22 @@ def generate_rule(bytecode):
     src_port_arg = ''
     if bytecode.src_port.port > 0:
         if not proto_arg:
-            raise RuntimeError, "source port needs to know a protocol"
+            raise RuntimeError('source port needs to know a protocol')
 
         if bytecode.src_port.endport > 0:
-            src_port_arg = ' --sport %d:%d' % (bytecode.src_port.port, bytecode.src_port.endport)
+            src_port_arg = ' --sport %d:%d' % (bytecode.src_port.port,
+                                               bytecode.src_port.endport)
         else:
             src_port_arg = ' --sport %d' % bytecode.src_port.port
 
     dest_port_arg = ''
     if bytecode.dest_port.port > 0:
         if not proto_arg:
-            raise RuntimeError, "destination port needs to know a protocol"
+            raise RuntimeError('destination port needs to know a protocol')
 
         if bytecode.dest_port.endport > 0:
-            dest_port_arg = ' --dport %d:%d' % (bytecode.dest_port.port, bytecode.dest_port.endport)
+            dest_port_arg = ' --dport %d:%d' % (bytecode.dest_port.port,
+                                                bytecode.dest_port.endport)
         else:
             dest_port_arg = ' --dport %d' % bytecode.dest_port.port
 
@@ -85,7 +94,7 @@ def generate_rule(bytecode):
         target_arg = 'REJECT'
 
     else:
-        raise RuntimeError, 'unknown target %s' % bytecode.allow
+        raise RuntimeError('unknown target %s' % bytecode.allow)
 
     # output iptables rule
     print '-A %s%s%s -s %s%s -d %s%s -j %s' % (chain, iface_arg, proto_arg,
@@ -93,6 +102,8 @@ def generate_rule(bytecode):
 
 
 def generate_policy(bytecode):
+    '''generate policy for bytecode'''
+
     chain = ''
     if bytecode.chain == 'incoming':
         chain = 'INPUT'
@@ -104,7 +115,7 @@ def generate_policy(bytecode):
         chain = 'FORWARD'
 
     else:
-        raise RuntimeError, 'unknown policy chain %s' % bytecode.chain
+        raise RuntimeError('unknown policy chain %s' % bytecode.chain)
 
     policy = ''
     if bytecode.policy == 'allow':
@@ -114,28 +125,36 @@ def generate_policy(bytecode):
         policy = 'DROP'
 
     else:
-        raise RuntimeError, 'unknown policy %s' % bytecode.policy
+        raise RuntimeError('unknown policy %s' % bytecode.policy)
 
     print ':%s %s' % (chain, policy)
 
 
 def change_chain(bytecode):
+    '''change iptables chain'''
+
     global CURRENT_CHAIN
 
     CURRENT_CHAIN = bytecode.chain
 
 
 def generate_echo(bytecode):
+    '''generate print statement'''
+
     print bytecode.str
 
 
 def generate_verbatim(bytecode):
+    '''generate verbatim block'''
+
     for line in bytecode.text_array:
         print line
 
 
 def generate_comment(bytecode):
-    print '# %s:%d: %s' % (bytecode.filename, bytecode.lineno, bytecode.comment)
+    '''generate comment line'''
 
+    print '# %s:%d: %s' % (bytecode.filename, bytecode.lineno,
+                           bytecode.comment)
 
 # EOB

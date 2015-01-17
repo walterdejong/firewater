@@ -8,6 +8,8 @@
 #   License.
 #
 
+'''firewater global variables'''
+
 VERSION = '1.2-beta'
 
 DEBUG = False
