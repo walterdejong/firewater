@@ -22,7 +22,7 @@ import os
 import sys
 import getopt
 import errno
-
+import socket
 
 def generate():
     '''loads plugin module and generates the rules'''
@@ -163,6 +163,14 @@ def main():
     # define the name of the current output module as a 'DEFINE'
     if not firewater.globals.MODULE in firewater.globals.DEFINES:
         firewater.globals.DEFINES.insert(0, firewater.globals.MODULE)
+
+    # add the hostname of the machine to the defines
+    try:
+        firewater.globals.DEFINES.append(
+            socket.gethostname().replace('.','_').upper()
+        )
+    except Exception:
+        pass
 
     # read input: the rule set
     errors = 0
