@@ -164,12 +164,13 @@ def main():
     if not firewater.globals.MODULE in firewater.globals.DEFINES:
         firewater.globals.DEFINES.insert(0, firewater.globals.MODULE)
 
-    # add the hostname of the machine to the defines
+    # add the hostname of the machine to the defines, when an exception
+    # is caught, then just pass it and continue with firewater
     try:
         firewater.globals.DEFINES.append(
-            socket.gethostname().replace('.','_').upper()
+            socket.getfqdn().replace('.','_').upper()
         )
-    except Exception:
+    except (socket.error, socket.herror, socket.gaierror, socket.timeout) as err:
         pass
 
     # read input: the rule set
