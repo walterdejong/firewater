@@ -164,14 +164,20 @@ def main():
     if not firewater.globals.MODULE in firewater.globals.DEFINES:
         firewater.globals.DEFINES.insert(0, firewater.globals.MODULE)
 
-    # add the hostname of the machine to the defines, when an exception
-    # is caught, then just pass it and continue with firewater
+    # add the fqdn of the machine to the defines
     try:
-        firewater.globals.DEFINES.append(
-            socket.getfqdn().replace('.','_').upper()
-        )
-    except (socket.error, socket.herror, socket.gaierror, socket.timeout) as err:
+        fqdn = socket.getfqdn()
+    except (socket.error, socket.herror, socket.gaierror):
         pass
+    else:
+        fqdn_def = fqdn.replace('.', '_').upper()
+        if not fqdn_def in firewater.globals.DEFINES:
+            firewater.globals.DEFINES.append(fqdn_def)
+
+    if firewater.globals.DEBUG:
+        # show what defines we have
+        for symbol in firewater.globals.DEFINES:
+            debug('external define: %s' % symbol)
 
     # read input: the rule set
     errors = 0
