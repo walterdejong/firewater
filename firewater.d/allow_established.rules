@@ -13,7 +13,7 @@ endif
 
 ifdef iptables
   # allow established on any interface
-  echo -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+  echo -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 endif
 
 # EOB

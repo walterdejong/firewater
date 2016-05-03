@@ -10,9 +10,9 @@ ifndef iptables
 endif
 
 ifdef iptables
-  echo -A INPUT   -m state --state INVALID -j DROP
-  echo -A FORWARD -m state --state INVALID -j DROP
-  echo -A OUTPUT  -m state --state INVALID -j DROP
+  echo -A INPUT   -m conntrack --ctstate INVALID -j DROP
+  echo -A FORWARD -m conntrack --ctstate INVALID -j DROP
+  echo -A OUTPUT  -m conntrack --ctstate INVALID -j DROP
 
   echo -A INPUT -p tcp -m tcp --tcp-flags SYN,FIN SYN,FIN -j DROP
   echo -A INPUT -p tcp -m tcp --tcp-flags SYN,RST SYN,RST -j DROP
