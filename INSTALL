@@ -49,6 +49,26 @@ running the following command:
 
   python ./setup.py bdist_rpm
 
+After installation of the created package do following:
+
+For systems using init.d use:
+
+rm /etc/systemd/system/firewater.service
+chkconfig firewater on
+touch /etc/firewater.rules
+service firewater test
+service firewater commit
+
+
+For systems using systemd use:
+
+rm /etc/init/d/firewater
+systemctl enable firewater.service
+touch /etc/firewater.rules
+source /etc/default/firewater ; /usr/bin/firewater $EXTRA_OPTIONS -v $RULESET
+source /etc/default/firewater ; /usr/bin/firewater $EXTRA_OPTIONS -v $RULESET > $COMPILED_RULESET
+ 
+
 For more information, please consult the documentation at:
 http://www.heiho.net/software/firewater/doc/index.html
 
