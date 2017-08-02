@@ -13,6 +13,8 @@ For installing the software, in short, do the following (as root):
 If you want to use the provided init-script for Linux, also do
 these steps:
 
+For systems using init.d use:
+
 cp contrib/firewater.init /etc/init.d/firewater
 cp contrib/firewater.default /etc/default/firewater
 touch /etc/firewater.rules
@@ -24,6 +26,19 @@ Setup your rules using vi (or editor of choice) in /etc/firewater.rules
 Call /etc/init.d/firewater test
 and  /etc/init.d/firewater commit
 
+
+For systems using systemd use:
+
+cp contrib/firewater.service /etc/systemd/system/firewater
+cp contrib/firewater.default /etc/default/firewater
+touch /etc/firewater.rules
+
+Use systemctl to activate the firewater service script
+Edit /etc/default/firewater as you wish.
+
+Setup your rules using vi (or editor of choice) in /etc/firewater.rules
+Call source /etc/default/firewater ; /usr/bin/firewater $EXTRA_OPTIONS -v $RULESET
+and  source /etc/default/firewater ; /usr/bin/firewater $EXTRA_OPTIONS -v $RULESET > $COMPILED_RULESET
 
 
 On Debian systems you may create a package by using debian/rules

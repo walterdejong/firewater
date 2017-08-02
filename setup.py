@@ -19,6 +19,10 @@ if not os.path.exists('build/etc/init.d'):
     os.makedirs('build/etc/init.d')
 shutil.copyfile('contrib/firewater.init', 'build/etc/init.d/firewater')
 
+if not os.path.exists('build/etc/systemd/system'):
+    os.makedirs('build/etc/systemd/system')
+shutil.copyfile('contrib/firewater.service', 'build/etc/systemd/system/firewater.service')
+
 if not os.path.exists('build/etc/default'):
     os.makedirs('build/etc/default')
 shutil.copyfile('contrib/firewater.default', 'build/etc/default/firewater')
@@ -59,6 +63,7 @@ setup(
         'firewater.d/logging.rules'
         ]),
         ('/etc/init.d', ['build/etc/init.d/firewater']),
+        ('/etc/systemd/system', ['build/etc/systemd/system/firewater.service']),
         ('/etc/default', ['build/etc/default/firewater'])
     ],
 )

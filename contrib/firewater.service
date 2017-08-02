@@ -1,0 +1,14 @@
+[Unit]
+Description=Starting of firewater Server
+After=network.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/firewater
+ExecStart=/usr/sbin/iptables-restore ${COMPILED_RULESET}
+ExecStop=/usr/sbin/iptables -F ; /usr/sbin/iptables -P INPUT ACCEPT ; /usr/sbin/iptables -P OUTPUT ACCEPT ; /usr/sbin/iptables -P FORWARD ACCEPT
+Environment=PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
