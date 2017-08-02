@@ -40,7 +40,7 @@ then
 fi
 
 # change linux kernel settings
-if [ "LINUX_KERNEL_SETTINGS" = "yes" ]
+if [ "$LINUX_KERNEL_SETTINGS" = "yes" ]
 then
 	echo $RP_FILTER >/proc/sys/net/ipv4/conf/all/rp_filter
 	echo $LOG_MARTIANS >/proc/sys/net/ipv4/conf/all/log_martians
