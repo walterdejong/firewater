@@ -62,7 +62,7 @@ setup(
         'firewater.d/reject_all.rules',
         'firewater.d/logging.rules'
         ]),
-        ('/etc/init.d', ['build/etc/init.d/firewater']),
+        ('/etc/systemd/system', ['build/etc/systemd/system/firewater.service']),
         ('/etc/default', ['build/etc/default/firewater'])
     ],
 )
