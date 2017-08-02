@@ -15,36 +15,35 @@
 #	Note: this init.d/ script assumes Linux platform and iptables firewall
 #
 
-PATH="/bin:/usr/bin:/sbin:/usr/sbin"
+PATH="/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
+PROG="firewater"
 
 DEFAULTS="/etc/default/firewater"
 
-if [ -r $DEFAULTS ]
+if [ -r "$DEFAULTS" ]
 then
-	. $DEFAULTS
+	. "$DEFAULTS"
 else
-	echo "ERROR: $DEFAULTS not found, aborting"
+	echo "$PROG: ERROR: $DEFAULTS not found, aborting"
+	echo "$PROG: Your system is currently NOT protected by firewater"
+	echo
 	exit 1
 fi
 
 if [ ! -r "$RULESET" ]
 then
-	echo "ERROR: ruleset $RULESET not found, aborting"
-	exit 1
-fi
-
-if [ ! -r "$COMPILED_RULESET" ]
-then
-	echo "ERROR: compiled ruleset $COMPILED_RULESET not found, aborting"
+	echo "$PROG: ERROR: ruleset $RULESET not found, aborting"
+	echo "$PROG: Your system is currently NOT protected by firewater"
+	echo
 	exit 1
 fi
 
 # change linux kernel settings
 if [ "$LINUX_KERNEL_SETTINGS" = "yes" ]
 then
-	echo $RP_FILTER >/proc/sys/net/ipv4/conf/all/rp_filter
-	echo $LOG_MARTIANS >/proc/sys/net/ipv4/conf/all/log_martians
-	echo $TCP_SYNCOOKIES >/proc/sys/net/ipv4/tcp_syncookies
+	echo "$RP_FILTER" >/proc/sys/net/ipv4/conf/all/rp_filter
+	echo "$LOG_MARTIANS" >/proc/sys/net/ipv4/conf/all/log_martians
+	echo "$TCP_SYNCOOKIES" >/proc/sys/net/ipv4/tcp_syncookies
 fi
 
 
@@ -56,8 +55,20 @@ case "$1" in
 			exit 0
 		fi
 
-		echo "Starting firewater hostbased firewall ..."
-		iptables-restore < $COMPILED_RULESET
+		if [ -r "$COMPILED_RULESET" ]
+		then
+			echo "Starting firewater hostbased firewall ..."
+			iptables-restore < $COMPILED_RULESET
+		else
+			echo "$PROG: WARNING: compiled ruleset $COMPILED_RULESET not found"
+			echo "$PROG: Your system is currently NOT protected by firewater"
+			echo "$PROG:"
+			echo "$PROG: To compile the ruleset, you should run"
+			echo "$PROG:"
+			echo "$PROG:    $0 test"
+			echo "$PROG:    $0 commit"
+			echo
+		fi
 		;;
 	
 	stop)
@@ -77,16 +88,22 @@ case "$1" in
 		;;
 
 	test)
-		firewater $EXTRA_OPTIONS -v $RULESET
-		echo
-		echo "warning: your changes have not been committed"
-		echo "warning: use '$0 commit' to save the ruleset"
-		echo
+		firewater $EXTRA_OPTIONS -v "$RULESET"
+		if [ $? -eq 0 ]
+		then
+			echo
+			echo "warning: your changes have not been committed"
+			echo "warning: use '$0 commit' to save the ruleset"
+			echo
+		fi
 		;;
 	
 	commit)
-		firewater $EXTRA_OPTIONS -v $RULESET >$COMPILED_RULESET
-		$0 start
+		firewater $EXTRA_OPTIONS -v "$RULESET" >"$COMPILED_RULESET"
+		if [ $? -eq 0 ]
+		then
+			$0 start
+		fi
 		;;
 
 	*)
@@ -95,6 +112,4 @@ case "$1" in
 		;;
 esac
 
-
 # EOB
-

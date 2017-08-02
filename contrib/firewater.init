@@ -20,9 +20,9 @@ PROG="firewater"
 
 DEFAULTS="/etc/default/firewater"
 
-if [ -r $DEFAULTS ]
+if [ -r "$DEFAULTS" ]
 then
-	. $DEFAULTS
+	. "$DEFAULTS"
 else
 	echo "$PROG: ERROR: $DEFAULTS not found, aborting"
 	echo "$PROG: Your system is currently NOT protected by firewater"
@@ -41,9 +41,9 @@ fi
 # change linux kernel settings
 if [ "$LINUX_KERNEL_SETTINGS" = "yes" ]
 then
-	echo $RP_FILTER >/proc/sys/net/ipv4/conf/all/rp_filter
-	echo $LOG_MARTIANS >/proc/sys/net/ipv4/conf/all/log_martians
-	echo $TCP_SYNCOOKIES >/proc/sys/net/ipv4/tcp_syncookies
+	echo "$RP_FILTER" >/proc/sys/net/ipv4/conf/all/rp_filter
+	echo "$LOG_MARTIANS" >/proc/sys/net/ipv4/conf/all/log_martians
+	echo "$TCP_SYNCOOKIES" >/proc/sys/net/ipv4/tcp_syncookies
 fi
 
 
@@ -88,7 +88,7 @@ case "$1" in
 		;;
 
 	test)
-		firewater $EXTRA_OPTIONS -v $RULESET
+		firewater $EXTRA_OPTIONS -v "$RULESET"
 		if [ $? -eq 0 ]
 		then
 			echo
@@ -99,7 +99,7 @@ case "$1" in
 		;;
 	
 	commit)
-		firewater $EXTRA_OPTIONS -v $RULESET >$COMPILED_RULESET
+		firewater $EXTRA_OPTIONS -v "$RULESET" >"$COMPILED_RULESET"
 		if [ $? -eq 0 ]
 		then
 			$0 start
@@ -113,4 +113,3 @@ case "$1" in
 esac
 
 # EOB
-
