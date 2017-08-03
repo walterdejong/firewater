@@ -4,7 +4,10 @@ After=network.service
 
 [Service]
 Type=oneshot
-EnvironmentFile=-/etc/default/firewater
+EnvironmentFile=/etc/default/firewater
+ExecStartPre=/bin/bash -c 'if [ "$LINUX_KERNEL_SETTINGS" = "yes" ] ; then /usr/bin/echo $RP_FILTER >/proc/sys/net/ipv4/conf/all/rp_filter ; fi'
+ExecStartPre=/bin/bash -c 'if [ "$LINUX_KERNEL_SETTINGS" = "yes" ] ; then /usr/bin/echo $LOG_MARTIANS >/proc/sys/net/ipv4/conf/all/log_martians ; fi'
+ExecStartPre=/bin/bash -c 'if [ "$LINUX_KERNEL_SETTINGS" = "yes" ] ; then /usr/bin/echo $TCP_SYNCOOKIES >/proc/sys/net/ipv4/tcp_syncookies ; fi'
 ExecStart=/usr/sbin/iptables-restore ${COMPILED_RULESET}
 ExecStop=/usr/sbin/iptables -F ; /usr/sbin/iptables -P INPUT ACCEPT ; /usr/sbin/iptables -P OUTPUT ACCEPT ; /usr/sbin/iptables -P FORWARD ACCEPT
 Environment=PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin:/usr/local/sbin
