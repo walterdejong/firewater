@@ -1,5 +1,5 @@
 [Unit]
-Description=Starting of firewater Server
+Description=firewater Server
 After=network.service
 
 [Service]
