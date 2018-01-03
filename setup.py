@@ -17,7 +17,7 @@ import firewater.globals
 
 if not os.path.exists('build/etc/init.d'):
     os.makedirs('build/etc/init.d')
-shutil.copyfile('contrib/firewater.init', 'build/etc/init.d/firewater')
+shutil.copy2('contrib/firewater.init', 'build/etc/init.d/firewater')
 
 if not os.path.exists('build/etc/systemd/system'):
     os.makedirs('build/etc/systemd/system')
