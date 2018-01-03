@@ -13,6 +13,8 @@ For installing the software, in short, do the following (as root):
 If you want to use the provided init-script for Linux, also do
 these steps:
 
+For systems using init.d use:
+
 cp contrib/firewater.init /etc/init.d/firewater
 cp contrib/firewater.default /etc/default/firewater
 touch /etc/firewater.rules
@@ -25,6 +27,19 @@ Call /etc/init.d/firewater test
 and  /etc/init.d/firewater commit
 
 
+For systems using systemd use:
+
+cp contrib/firewater.service /etc/systemd/system/firewater
+cp contrib/firewater.default /etc/default/firewater
+touch /etc/firewater.rules
+
+Use systemctl to activate the firewater service script
+Edit /etc/default/firewater as you wish.
+
+Setup your rules using vi (or editor of choice) in /etc/firewater.rules
+Call source /etc/default/firewater ; /usr/bin/firewater $EXTRA_OPTIONS -v $RULESET
+and  source /etc/default/firewater ; /usr/bin/firewater $EXTRA_OPTIONS -v $RULESET > $COMPILED_RULESET
+
 
 On Debian systems you may create a package by using debian/rules
 
@@ -33,6 +48,26 @@ create a package by using distutils. You can create the package by
 running the following command:
 
   python ./setup.py bdist_rpm
+
+After installation of the created package do following:
+
+For systems using init.d use:
+
+rm /etc/systemd/system/firewater.service
+chkconfig firewater on
+touch /etc/firewater.rules
+service firewater test
+service firewater commit
+
+
+For systems using systemd use:
+
+rm /etc/init/d/firewater
+systemctl enable firewater.service
+touch /etc/firewater.rules
+source /etc/default/firewater ; /usr/bin/firewater $EXTRA_OPTIONS -v $RULESET
+source /etc/default/firewater ; /usr/bin/firewater $EXTRA_OPTIONS -v $RULESET > $COMPILED_RULESET
+ 
 
 For more information, please consult the documentation at:
 http://www.heiho.net/software/firewater/doc/index.html

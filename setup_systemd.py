@@ -17,7 +17,7 @@ import firewater.globals
 
 if not os.path.exists('build/etc/init.d'):
     os.makedirs('build/etc/init.d')
-shutil.copy2('contrib/firewater.init', 'build/etc/init.d/firewater')
+shutil.copyfile('contrib/firewater.init', 'build/etc/init.d/firewater')
 
 if not os.path.exists('build/etc/systemd/system'):
     os.makedirs('build/etc/systemd/system')
@@ -62,7 +62,7 @@ setup(
         'firewater.d/reject_all.rules',
         'firewater.d/logging.rules'
         ]),
-        ('/etc/init.d', ['build/etc/init.d/firewater']),
+        ('/etc/systemd/system', ['build/etc/systemd/system/firewater.service']),
         ('/etc/default', ['build/etc/default/firewater'])
     ],
 )
