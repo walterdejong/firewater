@@ -1,11 +1,11 @@
 Source: firewater
 Section: admin
-Maintainer: Dennis Stam <dennis.stam@sara.nl>
-Build-Depends: debhelper (>= 7.0.15), cdbs (>= 0.4.52), python, python-support (>= 0.8.4)
-Build-Depends-Indep: python (>= 2.5)
-Standards-Version: 3.8.0
+Priority: optional
+Maintainer: Dennis Stam <dennis.stam@surf.nl>
+Build-Depends: debhelper (12.1.1), dh-python, python3-all
+XS-Python-Version: >= 3.6
 
 Package: firewater
 Architecture: all
-Depends: ${python:Depends}, iptables
+Depends: ${misc:Depends}, ${python3:Depends}, iptables
 Description: Hostbased firewall configuration tool
