@@ -175,7 +175,7 @@ verbatim<br />
 -I INPUT -i lo -j ACCEPT<br />
 -I FORWARD -o lo -j ACCEPT<br />
 -I FORWARD -i lo -j ACCEPT<br />
-end<br />
+end verbatim<br />
 </div>
 </p>
 </div>
