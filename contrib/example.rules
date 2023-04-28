@@ -1,0 +1,45 @@
+# this line is comment
+
+iface public eth0
+iface internal eth1
+iface all-interfaces eth0,eth1,eth1.vlan10
+
+host myhost heiho.net
+host myhost2 127.0.1.18
+
+host google 74.125.79.99, 74.125.79.100, 74.125.79.101
+
+network internal-network 192.168.1.0/16
+
+group search-engines google, www.yahoo.com, \
+      www.altavista.com, www.bing.com, \
+      sogou.com, soso.com, 127.123.12.34
+
+service myservice tcp 1234
+
+chain incoming default policy drop
+chain outgoing default policy accept
+
+include /etc/firewater.d/anti_spoofing.rules
+
+
+# it's just an example
+allow tcp from any to myhost port ssh on public interface
+
+# it's just an example
+deny tcp from search-engines to internal-network
+
+include /etc/firewater.d/reject_all.rules
+
+
+ifdef TEST
+echo This is a test !!!
+endif
+
+# inject iptables rules
+verbatim
+-I INPUT -i lo -j ACCEPT
+-I FORWARD -o lo -j ACCEPT
+-I FORWARD -i lo -j ACCEPT
+end verbatim
+

@@ -10,10 +10,17 @@
 
 '''implements firewater bytecode'''
 
-class ByteCode(object):
+from typing import List, Optional
+
+from firewater.service import ServiceObject
+
+
+class ByteCode:
     '''holds the bytecode from which the output statements
     will be generated
     '''
+
+    # pylint: disable=attribute-defined-outside-init
 
     TYPE_RULE = 1
     TYPE_POLICY = 2
@@ -26,13 +33,14 @@ class ByteCode(object):
     TYPES = ('None', 'rule', 'policy', 'chain', 'echo', 'verbatim',
              'comment', 'exit')
 
-    def __init__(self):
+    def __init__(self) -> None:
         '''initialize instance'''
 
-        self.type = None
+        self.type = None                # type: Optional[int]
 
-    def set_rule(self, filename, lineno, allow, proto, src, src_port,
-                 dest, dest_port, iface):
+    def set_rule(self, filename: str, lineno: int, allow: str, proto: Optional[str],
+                 src: str, src_port: ServiceObject, dest: str, dest_port: ServiceObject,
+                 iface: Optional[str]) -> None:
         '''initialize as rule'''
 
         self.type = ByteCode.TYPE_RULE
@@ -46,7 +54,7 @@ class ByteCode(object):
         self.dest_port = dest_port
         self.iface = iface
 
-    def set_policy(self, filename, lineno, chain, policy):
+    def set_policy(self, filename: str, lineno: int, chain: str, policy: str) -> None:
         '''initialize as policy'''
 
         self.type = ByteCode.TYPE_POLICY
@@ -55,7 +63,7 @@ class ByteCode(object):
         self.chain = chain
         self.policy = policy
 
-    def set_chain(self, filename, lineno, chain):
+    def set_chain(self, filename: str, lineno: int, chain: str) -> None:
         '''initialize as chain'''
 
         self.type = ByteCode.TYPE_CHAIN
@@ -63,7 +71,7 @@ class ByteCode(object):
         self.lineno = lineno
         self.chain = chain
 
-    def set_echo(self, filename, lineno, msg):
+    def set_echo(self, filename: str, lineno: int, msg: str) -> None:
         '''initialize as echo (print message)'''
 
         self.type = ByteCode.TYPE_ECHO
@@ -71,7 +79,7 @@ class ByteCode(object):
         self.lineno = lineno
         self.str = msg
 
-    def set_verbatim(self, filename, lineno, arr):
+    def set_verbatim(self, filename: str, lineno: int, arr: List[str]) -> None:
         '''initialize as verbatim block'''
 
         self.type = ByteCode.TYPE_VERBATIM
@@ -79,7 +87,7 @@ class ByteCode(object):
         self.lineno = lineno
         self.text_array = arr[:]
 
-    def set_comment(self, filename, lineno, comment):
+    def set_comment(self, filename: str, lineno: int, comment: str) -> None:
         '''initialize as comment'''
 
         self.type = ByteCode.TYPE_COMMENT
@@ -90,7 +98,7 @@ class ByteCode(object):
         if len(self.comment) > 200:
             self.comment = self.comment[:200] + " ... (long line truncated)"
 
-    def set_exit(self, filename, lineno, exit_code):
+    def set_exit(self, filename: str, lineno: int, exit_code: int) -> None:
         '''initialize as exit statement'''
 
         self.type = ByteCode.TYPE_EXIT

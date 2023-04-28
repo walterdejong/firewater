@@ -10,35 +10,41 @@
 
 '''firewater global variables'''
 
-VERSION = '1.3-beta'
+from typing import Dict, List
+
+from firewater.bytecode import ByteCode
+from firewater.service import ServiceObject
+
+
+VERSION = '1.4'
 
 DEBUG = False
 VERBOSE = False
 
 # dictionary holding interface aliases and groups
-INTERFACES = {'all': []}
+INTERFACES = {'all': []}                # type: Dict[str,List[str]]
 
 # dictionary with host and network range aliases
 HOSTS = {'any': ['0.0.0.0/0'],
          'everybody': ['0.0.0.0/0']}
 
 # dictionary with user-defined ServiceObjects
-SERVICES = {}
+SERVICES = {}                           # type: Dict[str,ServiceObject]
 
 # static list of known protocols
 KNOWN_PROTOCOLS = ('tcp', 'udp', 'ip', 'icmp', 'gre')
 
 # static list of known modules
-KNOWN_MODULES = ('iptables')
+KNOWN_MODULES = ('iptables',)
 
 # currently selected module
 MODULE = 'iptables'
 
 # cache of parsed rules
 # the final output is generated from this bytecode
-BYTECODE = []
+BYTECODE = []                           # type: List[ByteCode]
 
 # array of defines
-DEFINES = []
+DEFINES = []                            # type: List[str]
 
 # EOB

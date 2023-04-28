@@ -12,33 +12,41 @@
 
 import socket
 
-class ServiceObject(object):
+from typing import List, Optional
+
+
+class ServiceObject:
     '''object respresenting a service'''
 
-    def __init__(self, name=None, port=0, endport=0, proto=None, iface=None):
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self, name: Optional[str] = None, port: Optional[int] = 0, endport: Optional[int] = 0,
+                 proto: Optional[str] = None, iface: Optional[List[str]] = None) -> None:
         self.name = name
+        if port is None:
+            self.port = 0
+        else:
+            self.port = port
+        if endport is None:
+            self.endport = 0
+        else:
+            self.endport = endport  # it can be a port range
         self.proto = proto          # forced protocol
-        self.port = port
-        self.endport = endport      # it can be a port range
         self.iface = iface          # forced onto an interface
 
     def __repr__(self):
-        return '<ServiceObject: %s,%s,%d,%d,%s>' % (self.name, self.proto,
-                                                    self.port, self.endport,
-                                                    self.iface)
+        return f'<ServiceObject: {self.name},{self.proto},{self.port},{self.endport},{self.iface}>'
 
 
-def servbyname(name):
+def servbyname(name: str) -> int:
     '''Return service port number
-    or None on error
+    Raises KeyError if no such service
     '''
 
     try:
-        port = socket.getservbyname(name)
-    except socket.error:
-        return None
-
-    return port
+        return socket.getservbyname(name)
+    except socket.error as err:
+        raise KeyError(f"no such service: '{name}'") from err
 
 
 # EOB

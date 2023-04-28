@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #   firewater.py    WJ111
 #
@@ -8,8 +8,10 @@
 #   firewater is distributed under terms described in the GNU General Public
 #   License.
 
-import distutils.sysconfig
-import os,shutil
+'''build and install firewater'''
+
+import os
+import shutil
 
 from distutils.core import setup
 

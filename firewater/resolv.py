@@ -12,23 +12,25 @@
 
 import socket
 
-CACHE = {}
-CACHE6 = {}
+from typing import Dict, List
 
 
-def resolv(name):
-    '''Returns array of IPv4 addresses for name
-    or None on error
+CACHE = {}                              # type: Dict[str,List[str]]
+CACHE6 = {}                             # type: Dict[str,List[str]]
+
+
+def resolv(name: str) -> List[str]:
+    '''Returns list of IPv4 addresses for name
+    Raises KeyError on error
     '''
 
-    if CACHE.has_key(name):
+    if name in CACHE:
         return CACHE[name]
 
     try:
         addr_arr = socket.getaddrinfo(name, 0, socket.AF_UNSPEC)
-    except socket.gaierror:
-#       stderr('error resolving %s' % name)
-        return None
+    except socket.gaierror as err:
+        raise KeyError(f"error resolving {name}") from err
 
     addrs = []
     addrs6 = []
@@ -37,12 +39,12 @@ def resolv(name):
 
         if ipaddr.find(':') > -1:
             # treat as IPv6 address
-            if not ipaddr in addrs6:
+            if ipaddr not in addrs6:
                 addrs6.append(ipaddr)
 
         else:
             # treat as IPv4 address
-            if not ipaddr in addrs:
+            if ipaddr not in addrs:
                 addrs.append(ipaddr)
 
     CACHE[name] = addrs
@@ -53,43 +55,42 @@ def resolv(name):
     return addrs
 
 
-def resolv6(name):
-    '''returns array of IPv6 addresses for name
-    or None on error
+def resolv6(name: str) -> List[str]:
+    '''Returns list of IPv6 addresses for name
+    Raises KeyError on error
     '''
 
-    if CACHE6.has_key(name):
+    if name in CACHE6:
         return CACHE6[name]
 
     try:
         addr_arr = socket.getaddrinfo(name, 0, socket.AF_INET6)
-    except socket.gaierror:
-#       stderr('error resolving %s' % name)
-        return None
+    except socket.gaierror as err:
+        raise KeyError(f"error resolving {name}") from err
 
     addrs = []
     for addr in addr_arr:
         ipaddr = addr[4][0]
-        if not ipaddr in addrs:
+        if ipaddr not in addrs:
             addrs.append(ipaddr)
 
     CACHE6[name] = addrs
     return addrs
 
 
-def resolv4_and_6(name):
-    '''returns array of both IPv4 and IPv6 addresses for name
-    or None on error
+def resolv4_and_6(name: str) -> List[str]:
+    '''Returns list of both IPv4 and IPv6 addresses for name
+    Raises KeyError on error
     '''
 
     addrs = []
     from_cache = False
 
-    if CACHE.has_key(name):
+    if name in CACHE:
         addrs.extend(CACHE[name])
         from_cache = True
 
-    if CACHE6.has_key(name):
+    if name in CACHE6:
         addrs.extend(CACHE6[name])
         from_cache = True
 
@@ -98,13 +99,12 @@ def resolv4_and_6(name):
 
     # let resolv() get both IPv4 and IPv6 address into the cache
     addrs = resolv(name)
-    if addrs is None:   # error
-        return None
 
     # again, look in cache for IPv6
-    if CACHE6.has_key(name):
+    if name in CACHE6:
         addrs.extend(CACHE6[name])
 
     return addrs
+
 
 # EOB

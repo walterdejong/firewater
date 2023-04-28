@@ -1,3 +1,5 @@
+.swp
+*.swp
 MANIFEST
 build
 dist
