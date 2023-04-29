@@ -2,7 +2,7 @@
 #	/etc/firewater.d/anti_smurf.rules
 #
 #	do rate limiting on ICMP requests
-#	
+#
 #	Note: technically this is anti-smurfing, but
 #	      in practice you need to stop smurfs at the edge router
 #	      before it reaches your hosts
@@ -16,8 +16,7 @@ endif
 ifdef iptables
   echo -A INPUT -p icmp -m icmp --icmp-type address-mask-request -j DROP
   echo -A INPUT -p icmp -m icmp --icmp-type timestamp-request -j DROP
-  echo -A INPUT -p icmp -m icmp -m limit --limit 1/second -j ACCEPT
+  echo -A INPUT -p icmp -m icmp --icmp-type echo-request -m limit --limit 1/second -j ACCEPT
 endif
 
 # EOB
-
