@@ -1,0 +1,19 @@
+[Unit]
+Description=firewater host-based firewall
+Before=network-pre.target
+Wants=network-pre.target
+After=dbus.service
+After=polkit.service
+Conflicts=iptables.service firewalld.service ufw.service
+Documentation=http://walterdejong.github.io/firewater/doc/index.html
+
+[Service]
+Type=oneshot
+RemainAfterExit=True
+#EnvironmentFile=-/etc/default/firewater
+ExecStart=/sbin/firewater start
+ExecReload=/sbin/firewater restart
+ExecStop=/sbin/firewater stop
+
+[Install]
+WantedBy=multi-user.target

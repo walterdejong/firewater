@@ -9,24 +9,63 @@ For installing the software, in short, run the following (as root):
 
     ./setup.py install
 
+    # ./setup.py install
 
-If you want to use the provided init-script for Linux, also do
-these steps:
-
-    cp contrib/firewater.init /etc/init.d/firewater
-    cp contrib/firewater.default /etc/default/firewater
-    touch /etc/firewater.rules
-
-Use `chkconfig` or `update-rc.d` or whatever to activate the init script
-Edit `/etc/default/firewater` as you wish.
-
-Setup your rules using `vi` (or editor of choice) in `/etc/firewater.rules`
-and run:
-
-    /etc/init.d/firewater test
-    /etc/init.d/firewater commit
+See below for information on how to create a package.
 
 
+== Configuration ==
+
+The firewall does _nothing_ until you configure it.
+
+Review and edit `/etc/default/firewater` for some basic settings.
+
+Setup your rules using `vi` (or editor of choice) in `/etc/firewater.rules`.
+Beware that making a mistake might lock you out of the system, so start out
+with a simple ruleset that only logs things.
+
+Next, test the ruleset (verify that there are no syntax errors) and
+it must be committed to take effect. The firewall is reloaded when
+committed.
+
+    # vim /etc/firewater.rules
+
+    # firewater test
+
+    # firewater commit
+
+Remember: Whenever the ruleset is changed, it must be committed,
+otherwise the rules are not active.
+
+
+== Starting at boot time ==
+
+A committed ruleset persists across reboots, _but only if_ firewater has
+been enabled in the boot process.
+
+On systems that use SysV init:
+
+    # chkconfig firewater on
+
+    # service firewater status
+    # service firewater start
+
+or
+
+    # update-rc.d firewater defaults
+
+    # service firewater status
+    # service firewater start
+
+On systems that use systemd:
+
+    # systemctl enable firewater.service
+
+    # systemctl status -l firewater.service
+    # systemctl start firewater.service
+
+
+== Creating a package ==
 
 On Debian systems you may create a package by using `debian/rules`
 
@@ -34,7 +73,12 @@ On Redhat, CentOS, SUSE and other RPM based distributions you may
 create a package by using distutils. You can create the package by
 running the following command:
 
-    python ./setup.py bdist_rpm
+    # python ./setup.py bdist_rpm
+
+On most OSes, installing a package does not activate the service.
+You must configure and enable the service otherwise the firewall
+is not active.
+
 
 For more information, please consult the documentation at:
-http://www.heiho.net/software/firewater/doc/index.html
+http://walterdejong.github.io/firewater/doc/index.html

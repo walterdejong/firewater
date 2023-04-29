@@ -1,19 +1,21 @@
 #!/usr/bin/make -f
 
+DEB_PYTHON_SYSTEM := pysupport
 DEB_PYTHON_SETUP_CMD := setup.py
 DEB_PYTHON_COMPRESS_EXCLUDE := .pyc
 DEB_STRIP_EXCLUDE := .pyc
 
 %:
-	dh $@ --with python3 --buildsystem=pybuild
+	dh $@ --with python3 --buildsystem=pybuild --with systemd
 
 
 override_dh_auto_install:
 	dh_auto_install
 
 override_dh_installinit:
-	dh_installinit --noscript
+	dh_systemd_enable --no-enable --name=firewater firewater.service
+	dh_installinit --noscripts --no-start
 
-binary-post-install/firewater::
-	touch debian/firewater/etc/iptables.saved
-	echo "# Add your rules here\n\n"  > debian/firewater/etc/firewater.rules
+##binary-post-install/firewater::
+##	touch debian/firewater/etc/iptables.saved
+##	echo "# Add your rules here\n\n"  > debian/firewater/etc/firewater.rules

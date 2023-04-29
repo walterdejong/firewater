@@ -3,7 +3,7 @@
 
 	firewater by Walter de Jong <walter@heiho.net> (c) 2012
 
-	firewater COMES WITH NO WARRANTY. synctool IS FREE SOFTWARE.
+	firewater COMES WITH NO WARRANTY. firewater IS FREE SOFTWARE.
 	firewater is distributed under terms described in the GNU General Public
 	License.
 */
@@ -142,38 +142,18 @@ div#footer {
 	font-size: .8em;
 }
 
-.example {
+pre > code {
 	border: solid 1px #000;
 	background-color: #eee;
-	font-family: menlo, courier, monospace;
-	font-size: .95em;
-	margin: 1em auto 1em auto;
+	font-family: courier, monospace;
+	margin: 1em;
 	padding: 1em;
-	padding-left: 1.5em;
+	display: block;
 }
 
-.note {
-	border: dashed 1px #aaa;
+code {
 	background-color: #eee;
-	margin: 1em auto 1em auto;
-	padding: 1em;
-}
-
-.system {
-	font-family: menlo, courier, monospace;
-	font-size: .95em;
-	word-break: keep-all;
-}
-
-.cmd {
-	font-family: menlo, courier, monospace;
-	font-size: .95em;
-	word-break: keep-all;
-}
-
-.path {
-	font-family: menlo, courier, monospace;
-	font-size: .95em;
+	font-family: courier, monospace;
 }
 
 .vtab {

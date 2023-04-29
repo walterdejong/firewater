@@ -1,45 +1,48 @@
-# this line is comment
+#
+#	example.rules
+#
 
 iface public eth0
-iface internal eth1
-iface all-interfaces eth0,eth1,eth1.vlan10
 
-host myhost heiho.net
-host myhost2 127.0.1.18
+network internal-network 192.168.1.0/24
 
-host google 74.125.79.99, 74.125.79.100, 74.125.79.101
+host YouTube youtube.com, vimeo.com, vine.com
 
-network internal-network 192.168.1.0/16
 
-group search-engines google, www.yahoo.com, \
-      www.altavista.com, www.bing.com, \
-      sogou.com, soso.com, 127.123.12.34
+service my-bbs 1234
 
-service myservice tcp 1234
 
-chain incoming default policy drop
+# NOTE: because a careful example, we don't drop incoming
+chain incoming default policy accept
 chain outgoing default policy accept
+chain incoming
 
-include /etc/firewater.d/anti_spoofing.rules
+include /etc/firewater.d/allow_loopback.rules
+##include /etc/firewater.d/anti_spoofing.rules
+include /etc/firewater.d/drop_invalid.rules
+include /etc/firewater.d/anti_smurf.rules
+include /etc/firewater.d/allow_established.rules
+
+# I can use ssh to log in
+allow from internal-network to any port ssh
+
+# let people connect to my BBS
+allow from any to any port my-bbs on public interface
 
 
-# it's just an example
-allow tcp from any to myhost port ssh on public interface
+ifdef PARENTING
+chain outgoing
 
-# it's just an example
-deny tcp from search-engines to internal-network
+# stop watching them videos
+deny from any to YouTube
 
-include /etc/firewater.d/reject_all.rules
-
-
-ifdef TEST
-echo This is a test !!!
+chain incoming
 endif
 
-# inject iptables rules
-verbatim
--I INPUT -i lo -j ACCEPT
--I FORWARD -o lo -j ACCEPT
--I FORWARD -i lo -j ACCEPT
-end verbatim
 
+include /etc/firewater.d/log.rules
+
+##include /etc/firewater.d/logging.rules
+##include /etc/firewater.d/reject_all.rules
+
+# EOB

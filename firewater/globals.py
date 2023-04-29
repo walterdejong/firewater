@@ -16,7 +16,7 @@ from firewater.bytecode import ByteCode
 from firewater.service import ServiceObject
 
 
-VERSION = '1.4'
+VERSION = '1.5'
 
 DEBUG = False
 VERBOSE = False

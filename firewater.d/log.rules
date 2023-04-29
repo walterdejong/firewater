@@ -1,0 +1,16 @@
+#
+#	/etc/firewater.d/log.rules
+#
+#	* log without "dropping" prefix
+#
+
+ifndef iptables
+  echo logging currently only works with iptables
+  exit 127
+endif
+
+ifdef iptables
+  echo -A INPUT -m limit --limit 30/min -j LOG --log-prefix "iptables: "
+endif
+
+# EOB

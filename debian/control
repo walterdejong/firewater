@@ -2,8 +2,9 @@ Source: firewater
 Section: admin
 Priority: optional
 Maintainer: Dennis Stam <dennis.stam@surf.nl>
-Build-Depends: debhelper (12.1.1), dh-python, python3-all
+Build-Depends: debhelper (12.1.1), dh-python, dh-systemd, python3-all
 XS-Python-Version: >= 3.6
+Homepage: https://github.com/walterdejong/firewater
 
 Package: firewater
 Architecture: all
