@@ -76,10 +76,10 @@ class Parser:
         self.verbatim_text = []
 
         # is the ifdef true? may we execute statements?
-        self.ifdef_stack = [True,]
+        self.ifdef_stack = [True, ]
 
         # can we have an 'else' statement now?
-        self.else_stack = [False,]
+        self.else_stack = [False, ]
 
         # finally, open the file
         # This may raise an OSError exception
@@ -216,7 +216,8 @@ class Parser:
             bytecode.set_comment(self.filename, self.lineno, self.full_line)
             firewater.globals.BYTECODE.append(bytecode)
 
-    def missing_comma(self, a_list: List[str]) -> Optional[str]:
+    @staticmethod
+    def missing_comma(a_list: List[str]) -> Optional[str]:
         '''lists must be comma-separated, so
         if this function returns not None, then
         it's a syntax error: missing comma after element
@@ -885,7 +886,8 @@ class Parser:
 
         return address_list
 
-    def _parse_rule_interfaces(self, interface: Optional[str]) -> List[str]:
+    @staticmethod
+    def _parse_rule_interfaces(interface: Optional[str]) -> List[str]:
         iface_list = []                 # type: List[str]
 
         if not interface or interface == 'any':
