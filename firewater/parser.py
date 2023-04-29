@@ -781,7 +781,7 @@ class Parser:
                 proto = dest_svc.proto
 
             if not proto:
-                raise ParseError(f"{self}: missing protocol")
+                proto = 'tcp'
 
         # save the rule in globals.BYTECODE[]
         # the output statements are generated later,
