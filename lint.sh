@@ -5,7 +5,7 @@ then
 	for f in scripts/firewater firewater/*.py
 	do
 		PYTHONPATH=$(pwd) pylint --rcfile ./pylintrc $f
-	    MYPYPATH=$(pwd) mypy $f
+		MYPYPATH=$(pwd) mypy $f
 		flake8 $f
 	done
 else
