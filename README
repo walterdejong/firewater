@@ -14,9 +14,10 @@ have. firewater features user-definable logical groups to keep your policies
 For maximum flexibility, typical firewater statements may be intermixed
 with native commands to the underlying system-specific firewall.
 
-firewater currently only works with Linux iptables, but is extensible
-through its modular architecture so that it may support more firewalling
-systems in the future.
+> This is firewater version 1 for Linux iptables.
+> There exists a firewater version 2 with nicer syntax and that supports
+> both iptables and nftables:
+> see https://gitlab.com/surfsara/firewater
 
 For more information, please consult the documentation at:
 http://walterdejong.github.io/firewater/doc/index.html
